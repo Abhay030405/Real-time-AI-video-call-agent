@@ -50,9 +50,10 @@ Read the document for the area you are touching before planning. If code and doc
 
 | Folder | What goes here | What never goes here |
 |---|---|---|
-| `/` (root) | Only: `README.md`, `AGENTS.md`, `CLAUDE.md`, `.env`, `.env.example`, `.gitignore`, `.dockerignore`, `docker-compose.yml` | Code, scripts, notes, any other file |
+| `/` (root) | Only: `README.md`, `AGENTS.md`, `CLAUDE.md`, `.env`, `.env.example`, `.gitignore`, `.dockerignore`, `docker-compose.yml`, and `storage/` (local recordings, ignored by git and Docker, never pushed) | Code, scripts, notes, any other file |
 | `docs/reading_engine/` | The parent design document | — |
 | `docs/v0/` | Version 0 design documents (`V0_00` to `V0_07`, build phases) | Working notes for a single phase |
+| `docs/` (top level) | `not_implemented_features.md`: what is postponed, why, and when it comes back | Anything else |
 | `docs/phase<N>/` | Working documents for phase N (checklists, guides, designs), numbered `01_`, `02_`... | Code |
 | `agent/` | `Dockerfile`, `pyproject.toml`, `uv.lock`, `main.py` (the entry point), and the folders below | Web code, test data |
 | `agent/conductor/` | One turn from start to finish; assembling the instruction layers; the session clock | Vendor calls |
@@ -165,7 +166,7 @@ The repository is private on GitHub. `main` must always work.
 **Data and privacy**
 12. **Settings and secrets come only from `.env`** (section 4). `.env` is never committed.
 13. **In `web/`, never put a key behind `NEXT_PUBLIC_`.**
-14. **Recorded audio and video never go into the repository.** They live on local drives outside it (`TEST_MATERIAL_DIR`, with a backup copy); only file lists and consent records are committed.
+14. **Recorded audio and video never go into the repository.** They live in `storage/main` (`TEST_MATERIAL_DIR`) with a backup copy in `storage/backup` (`TEST_MATERIAL_BACKUP_DIR`). `storage/` is ignored by git and Docker and is never pushed; only file lists and consent records are committed.
 15. **Video never leaves the person's laptop** (RE-D3). Only face numbers do, from version 0.5.
 16. **"Forget that" removes every derived copy:** cache, session log, summaries, saved story.
 
@@ -201,7 +202,7 @@ The repository is private on GitHub. `main` must always work.
 | Voice | Cartesia; Sarvam Bulbul backup |
 | Avatar | LemonSlice (Phase 4) |
 | Data | PostgreSQL with pgvector (durable log, session stories), Redis (cache), hosted in India from Phase 3 |
-| Test material | Local drives outside the repository, with an external-drive backup; cloud storage in India added before Phase 4 |
+| Test material | Local folders `storage/main` and `storage/backup` inside the project, ignored by git and Docker; cloud storage in India added before Phase 4 |
 | Local running | Docker Compose (`docker-compose.yml`) |
 | Code hosting | Private GitHub repository |
 

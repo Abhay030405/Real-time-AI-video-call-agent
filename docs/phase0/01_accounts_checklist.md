@@ -28,7 +28,7 @@ Status: v0.1 · 19 Oct 2026 · Part of Phase 0 (`docs/v0/vaani_build_phase_v0.md
 
 ### 2. Test recording storage — local folders, no account needed
 
-- [ ] Create two folders: the main one (`TEST_MATERIAL_DIR`) and a backup (`TEST_MATERIAL_BACKUP_DIR`). Currently these are `storage/main` and `storage/backup` in the project folder, ignored by git and Docker. See `02_recording_guide.md` section 7.
+- [ ] Create two folders: the main one (`TEST_MATERIAL_DIR`) and a backup (`TEST_MATERIAL_BACKUP_DIR`). These are `storage/main` and `storage/backup` in the project folder, ignored by git and Docker, never pushed. See `02_recording_guide.md` section 7.
 - [ ] Fill in both paths in the root `.env`.
 - Cloud storage in India (Oracle was the earlier choice) is moved to later and is chosen again before Phase 4.
 

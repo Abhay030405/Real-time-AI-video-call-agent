@@ -86,12 +86,12 @@ vaani/
 
 ## Where recorded test material lives
 
-Speech clips and video turn-taking scripts are kept on **local drives, outside the repository** (founder decision, 19 Oct 2026, after the Oracle sign-up failed on card verification). The repository keeps only the file lists, versions and consent records under `evals/datasets/`. Everything stays in India.
+Speech clips and video turn-taking scripts are kept in **local folders inside the project, ignored by git and Docker, so they are never pushed** (founder decision, 19 Oct 2026, after the Oracle sign-up failed on card verification). Recording them is postponed; see `docs/not_implemented_features.md`. The repository keeps only the file lists, versions and consent records under `evals/datasets/`. Everything stays in India.
 
 **Storage rules (never lose a take):**
 
-1. **Main copy:** a folder outside the repository on the founder's laptop (`TEST_MATERIAL_DIR` in `.env`), so recordings can never be committed or copied into a Docker image by mistake.
-2. **Second copy:** an external drive (`TEST_MATERIAL_BACKUP_DIR`), updated after every recording session. The version 0 vs version 0.5 comparison depends on the exact same takes (RE-D13); a lost take can't be re-recorded.
+1. **Main copy:** `storage/main` on the founder's laptop (`TEST_MATERIAL_DIR` in `.env`). `storage/` is in `.gitignore` and `.dockerignore`, so recordings cannot be committed or copied into a Docker image.
+2. **Second copy:** `storage/backup` (`TEST_MATERIAL_BACKUP_DIR`), updated after every recording session. It is on the same disk, so copy it to an external drive from time to time. The version 0 vs version 0.5 comparison depends on the exact same takes (RE-D13); a lost take can't be re-recorded.
 3. **Every file is checked against its checksum** in the file list, so a damaged copy is noticed.
 4. **Cloud storage in India comes later, before Phase 4**, when tests start running away from the laptop. Options: Oracle Mumbai (if the card issue is fixed) or DigitalOcean Spaces Bangalore. Only the `.env` settings change.
 

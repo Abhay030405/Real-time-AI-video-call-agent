@@ -18,7 +18,7 @@ Each set has a `working/` folder (about 70%, used while building) and a `hidden/
 
 ## Storage
 
-Audio and video files live on local drives outside the repository: the main copy in `TEST_MATERIAL_DIR` and a second copy on an external drive (`TEST_MATERIAL_BACKUP_DIR`), both set in the root `.env`. Storage rules are in the root `README.md`. Each set's folder here holds a file list (name, version, checksum, transcript or label) and its consent records. The test runner reads the files from `TEST_MATERIAL_DIR` and checks each one against its checksum.
+Audio and video files live in local folders inside the project that git and Docker ignore, so they are never pushed: the main copy in `storage/main` (`TEST_MATERIAL_DIR`) and a second copy in `storage/backup` (`TEST_MATERIAL_BACKUP_DIR`), both set in the root `.env`. Storage rules are in the root `README.md`. Each set's folder here holds a file list (name, version, checksum, transcript or label) and its consent records. The test runner reads the files from `TEST_MATERIAL_DIR` and checks each one against its checksum.
 
 ## Rules
 

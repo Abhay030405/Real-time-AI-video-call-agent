@@ -6,7 +6,7 @@ web/.env
 web/.env.*
 !web/.env.example
 
-# Recorded test material lives in a folder outside the repository (TEST_MATERIAL_DIR).
+# Recorded test material lives in storage/ (TEST_MATERIAL_DIR), never pushed.
 # Only the file lists and consent records are committed.
 evals/datasets/**/*.wav
 evals/datasets/**/*.mp3

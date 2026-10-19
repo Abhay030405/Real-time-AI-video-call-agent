@@ -119,16 +119,16 @@ Line IDs, noise IDs and script IDs come from the lists in `03` and `04`. One fil
 
 ## 7. Folders and the two copies
 
-Recordings live **outside the repository**, never inside it.
+Recordings live in the `storage/` folder inside the project. It is ignored by git and Docker, so recordings are never pushed.
 
 ```
-<TEST_MATERIAL_DIR>/
+<TEST_MATERIAL_DIR>/   (storage/main)
 ├── l1_speech_to_text/v1/original/     the WAV files exactly as recorded and trimmed
 └── l4_turn_taking_scripts/v1/original/ the video files exactly as recorded and trimmed
 ```
 
 1. **Main copy:** the folder set as `TEST_MATERIAL_DIR` in the root `.env` (on the founder's laptop).
-2. **Second copy:** the same folders on an external drive (`TEST_MATERIAL_BACKUP_DIR`). **Copy after every session, the same day.**
+2. **Second copy:** the same folders in `storage/backup` (`TEST_MATERIAL_BACKUP_DIR`). It is on the same disk, so also copy it to an external drive from time to time. **Copy after every session, the same day.**
 3. Volunteers send their files to the founder (pen drive, or a private shared folder deleted after copying). Don't leave copies sitting in chat apps.
 4. Never edit a file once it's in `original/`. To redo a clip, record it again with a new file and note it.
 
