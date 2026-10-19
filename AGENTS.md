@@ -218,5 +218,6 @@ Filled in as each phase creates them.
 | Quick checks (style, types, unit tests for agent and web, secret scan) | `python scripts/quick_checks.py` |
 | Web page commands (run in `web/`) | `corepack pnpm@9.15.9 install`, `... dev`, `... test` |
 | Check every key in `.env` works (needs the local LiveKit server running) | `python scripts/check_keys.py` |
+| Live round trip through our own vendor connections (voice, hearing, brain) | `uv run --project agent python scripts/check_vendors.py` |
 | Check the test runner with the dummy set | `uv run --project agent python -m evals.runner --dummy --out <temp folder>` |
 | Run a real evaluation set | added with each test set (`evals/runner`) |
