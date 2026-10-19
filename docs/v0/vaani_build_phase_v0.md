@@ -47,13 +47,13 @@ After Phase 5: version 0.5, the Reading Engine (see its build plan, RE-1 to RE-8
 - **The test runner skeleton:** runs a named test set and saves a result record. Empty test sets are fine at this stage.
 - **Recorded material:**
   - *Postponed (founder decision, 19 Oct 2026; see `docs/not_implemented_features.md`):* speech-to-text test clips (200+): pure English, pure Hindi, Hinglish, with fan or traffic noise, Indian names and places, each with a correct transcript. From people who agreed in writing.
-  - The ~30 turn-taking scripts (thinking pauses of 2, 4 and 6 seconds, "hmm", "haan", coughs, real interruptions, background noise), **recorded with video** (RE-D13).
+  - *Postponed (founder decision, 19 Oct 2026; see `docs/not_implemented_features.md`):* the ~30 turn-taking scripts (thinking pauses of 2, 4 and 6 seconds, "hmm", "haan", coughs, real interruptions, background noise), **recorded with video** (RE-D13).
 
 ### Exit gate
 - [ ] One command runs the quick checks by hand, and it passes on the empty repository.
 - [ ] The test runner produces a valid result record from a dummy test.
 - [ ] Every Phase 0 account works with a test request, and spending limits are set.
-- [ ] Video turn-taking scripts are stored, versioned, with consent records. (Speech clips are postponed.)
+- ~~Video turn-taking scripts are stored, versioned, with consent records.~~ Postponed with the speech clips (`docs/not_implemented_features.md`).
 
 ---
 
@@ -64,10 +64,10 @@ After Phase 5: version 0.5, the Reading Engine (see its build plan, RE-1 to RE-8
 ### What gets built
 - The web page from LiveKit's ready-made starter: joins a room, microphone on, plays Vaani's voice.
 - The LiveKit agent in Mumbai: Sarvam speech-to-text (streaming) → AI model → Cartesia voice, with the first words sent to the voice as soon as they exist.
-- **Model choice:** test 2 or 3 fast models on the same English and Hinglish snippets (include Sarvam-30B as a candidate). Choose:
-  - **M1:** main brain, called directly, hosted in India where possible.
-  - **M2:** a different model from a different provider, through OpenRouter.
-  - **S1:** a cheaper helper for background jobs.
+- **Model choice:** made by the founder on 19 Oct 2026 without a comparison test (the comparison is postponed; see `docs/not_implemented_features.md`):
+  - **M1:** main brain, called directly: Sarvam-105B (`M1_MODEL`).
+  - **M2:** a different model from a different provider, through OpenRouter: `google/gemini-3.6-flash`.
+  - **S1:** a cheaper helper for background jobs, through OpenRouter: `google/gemini-3.1-flash-lite`.
 - **M1 → M2 fallback:** filler at 1.0 s with no first word; switch to M2 at 1.5 s; after two M1 failures in a row, stay on M2 for several minutes. Every switch logged.
 - **Pre-recorded clips in Vaani's chosen voice:** the "hmm" fillers (at least 6 variants) and the speech-to-text failure apology.
 - **Sarvam failure rule (RE-D9):** one lost turn → ask to repeat; two errors in a row or nothing for 5 s → apology clip, call ends, rejoin link valid for 30 minutes.
@@ -77,7 +77,7 @@ After Phase 5: version 0.5, the Reading Engine (see its build plan, RE-1 to RE-8
 
 ### Tests written in this phase
 - ~~**L1 speech-to-text:** word error rate and meaning-error rate on the recorded clips.~~ Postponed with the clips (`docs/not_implemented_features.md`).
-- **L1 models:** first-word time (50th/95th/99th) from Mumbai, reply quality, cost per 1,000 replies.
+- **L1 models:** first-word time (50th/95th/99th) from Mumbai and cost per 1,000 replies, measured for the chosen models. The model comparison and the reply-quality scoring are postponed.
 - **L1 voice:** 50 sentences with Hinglish words, names and numbers, rated 1 to 5; time to first audio.
 
 ### Exit gate
