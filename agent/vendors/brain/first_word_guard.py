@@ -69,6 +69,10 @@ class FirstWordGuard(llm.LLM[Any]):
             extra_kwargs=extra_kwargs,
         )
 
+    async def _prewarm_impl(self) -> None:
+        """Warm the connection to the model before the first turn (saves a slow first reply)."""
+        self._inner.prewarm()
+
     async def aclose(self) -> None:
         self._inner.off("metrics_collected", self._forward_metrics)
         await super().aclose()

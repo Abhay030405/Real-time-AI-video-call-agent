@@ -21,11 +21,14 @@ function WelcomeImage() {
 interface WelcomeViewProps {
   startButtonText: string;
   onStartCall: () => void;
+  /** Shown when Vaani ended the previous call herself, with the offer to start again. */
+  notice?: string | null;
 }
 
 export const WelcomeView = ({
   startButtonText,
   onStartCall,
+  notice,
   ref,
 }: React.ComponentProps<'div'> & WelcomeViewProps) => {
   return (
@@ -39,6 +42,12 @@ export const WelcomeView = ({
         <p className="text-muted-foreground max-w-prose pt-3 leading-7">
           Talk to me about anything, in English or Hinglish. I am an AI, and I am happy to listen.
         </p>
+
+        {notice && (
+          <p role="status" className="text-primary max-w-prose pt-6 leading-7">
+            {notice}
+          </p>
+        )}
 
         <Button
           size="lg"

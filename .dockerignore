@@ -4,6 +4,7 @@
 !.env.example
 **/.env
 **/.env.*
+!.env.example
 .git
 docs/
 evals/
@@ -15,6 +16,8 @@ web/
 **/.venv/
 **/.pytest_cache/
 **/*.wav
+# ... except Vaani's own pre-recorded clips, which the agent needs
+!assets/audio/**/*.wav
 **/*.mp4
 **/*.mov
 **/*.webm
