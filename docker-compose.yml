@@ -1,0 +1,57 @@
+# Local running only. Production uses LiveKit Cloud (Mumbai) for the agent
+# and managed PostgreSQL and Redis hosted in India.
+#
+# Start everything:           docker compose up --build
+# Only database and cache:    docker compose up postgres redis
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16          # PostgreSQL with the pgvector add-on
+    environment:
+      POSTGRES_USER: vaani
+      POSTGRES_PASSWORD: vaani_local_only  # local machine only, never used in production
+      POSTGRES_DB: vaani
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vaani -d vaani"]
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+
+  agent:
+    build:
+      context: .
+      dockerfile: agent/Dockerfile
+    env_file: .env
+    environment:
+      # Point the agent at the local database and cache, overriding .env
+      DATABASE_URL: postgresql://vaani:vaani_local_only@postgres:5432/vaani
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./web
+    env_file: web/.env
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
