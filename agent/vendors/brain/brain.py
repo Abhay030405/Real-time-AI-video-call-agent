@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
 from livekit.agents import llm
@@ -54,7 +55,9 @@ def build_s1(settings: Settings) -> llm.LLM[Any]:
     )
 
 
-def build_brain(settings: Settings) -> BrainFallback:
+def build_brain(
+    settings: Settings, on_switch: Callable[[str], None] | None = None
+) -> BrainFallback:
     """M1 with M2 behind it, using the reliability numbers from `.env`."""
     settings.require(
         "M1_SWITCH_AFTER_S", "M1_FAILS_BEFORE_BREAKER", "M2_STAY_MINUTES", "M2_FIRST_WORD_LIMIT_S"
@@ -69,6 +72,7 @@ def build_brain(settings: Settings) -> BrainFallback:
         switch_after_s=settings.get_float("M1_SWITCH_AFTER_S"),
         m2_first_word_limit_s=settings.get_float("M2_FIRST_WORD_LIMIT_S"),
         breaker=breaker,
+        on_switch=on_switch,
     )
 
 

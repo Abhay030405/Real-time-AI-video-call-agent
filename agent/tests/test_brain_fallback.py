@@ -84,3 +84,14 @@ async def test_if_both_fail_the_error_reaches_the_caller() -> None:
     brain, _ = make(FakeLLM("m1", fails), FakeLLM("m2", fails))
     with pytest.raises(Exception, match="all LLMs failed"):
         await ask(brain)
+
+
+async def test_warm_up_sends_one_small_request_to_m1_and_survives_failure() -> None:
+    m1, m2 = FakeLLM("m1", says), FakeLLM("m2", says)
+    brain, _ = make(m1, m2)
+    await brain.warm_up()
+    assert (m1.calls, m2.calls) == (1, 0)
+
+    broken_m1 = FakeLLM("m1", fails)
+    brain2, _ = make(broken_m1, FakeLLM("m2", says))
+    await brain2.warm_up()  # must not raise

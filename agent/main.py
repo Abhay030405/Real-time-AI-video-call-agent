@@ -7,14 +7,18 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import sys
+from collections.abc import Callable
+from typing import Any
 
-from livekit.agents import JobContext, JobProcess, WorkerOptions, cli
+from livekit.agents import AgentSession, JobContext, JobProcess, WorkerOptions, cli
 from livekit.plugins import silero
 
 from conductor.session import CallRunner, build_session
 from settings import load_settings
+from vendors.brain import BrainFallback
 
 logger = logging.getLogger("vaani.agent")
 
@@ -27,13 +31,32 @@ def prewarm(proc: JobProcess) -> None:
 async def entrypoint(ctx: JobContext) -> None:
     settings = load_settings()
     await ctx.connect()
-    session = build_session(settings, voice_detector=ctx.proc.userdata["vad"])
+    brain_events: list[Callable[[str], None]] = []
+    session = build_session(
+        settings,
+        voice_detector=ctx.proc.userdata["vad"],
+        on_brain_event=lambda what: _tell(brain_events, what),
+    )
     runner = CallRunner(settings, session, ctx.room)
+    brain_events.append(runner.brain_event)
     poller = runner.connect_events()
     ctx.add_shutdown_callback(lambda: _stop(poller))
+    warm_up = asyncio.create_task(_warm_up_brain(session))
     await session.start(agent=runner.agent, room=ctx.room)
+    await warm_up
     # The first words of the call: Vaani greets the person (one brain call, like any turn)
     session.generate_reply(instructions="Greet the person warmly in one short sentence.")
+
+
+async def _warm_up_brain(session: AgentSession[Any]) -> None:
+    brain = session.llm
+    if isinstance(brain, BrainFallback):
+        await brain.warm_up()
+
+
+def _tell(listeners: list[Callable[[str], None]], what: str) -> None:
+    for listener in listeners:
+        listener(what)
 
 
 async def _stop(task: object) -> None:

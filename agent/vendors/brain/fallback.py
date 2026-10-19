@@ -12,6 +12,7 @@ from collections.abc import Callable
 from typing import Any
 
 from livekit.agents import llm
+from livekit.agents.types import APIConnectOptions
 
 from reliability.m1_breaker import M1Breaker
 
@@ -54,6 +55,22 @@ class BrainFallback(llm.FallbackAdapter):
             logger.warning("M1 failed; breaker open=%s", self.breaker.is_open)
             if self._on_switch is not None:
                 self._on_switch("m1_failed")
+
+    async def warm_up(self, timeout_s: float = 5.0) -> None:
+        """One tiny request to M1 before the call starts, so the first real reply is not slow.
+
+        A brand new connection costs about 0.7 s, which would make the greeting miss the 1.5 s
+        limit. This runs before the person hears anything, not on a turn, and failing is fine.
+        """
+        context = llm.ChatContext()
+        context.add_message(role="user", content="Hi")
+        try:
+            options = APIConnectOptions(max_retry=0, timeout=timeout_s)
+            async with self._llm_instances[0].chat(chat_ctx=context, conn_options=options) as s:
+                async for _ in s:
+                    pass
+        except Exception as error:
+            logger.info("M1 warm-up did not finish (ignored): %s", error)
 
     def _m1_answered(self, *_: Any) -> None:
         self.breaker.record_success()
