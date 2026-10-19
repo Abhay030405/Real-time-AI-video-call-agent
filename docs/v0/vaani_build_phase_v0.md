@@ -83,7 +83,7 @@ After Phase 5: version 0.5, the Reading Engine (see its build plan, RE-1 to RE-8
 ### Exit gate
 - [ ] A 5-minute English chat and a 5-minute Hinglish chat run without breaking.
 - ~~Sarvam meaning-error rate on Hinglish clips is **5% or less**.~~ Postponed with the clips. Until it runs, Sarvam is checked only by the 5-minute English and Hinglish chats above.
-- [ ] M1 first-word time at the 95th percentile is **0.7 s or less** from Mumbai.
+- [ ] M1 first-word time at the 95th percentile is **0.7 s or less**. *Measured in local Docker for now; the "from Mumbai" measurement waits for the LiveKit Cloud deploy (`docs/not_implemented_features.md`).*
 - [ ] Killing M1 mid-call switches to M2 within 1.5 s with one filler.
 - [ ] Killing Cartesia switches to the backup voice.
 - [ ] Killing Sarvam produces the apology and a clean end.

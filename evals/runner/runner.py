@@ -13,6 +13,7 @@ from .record import (
     INDIAN_TIME,
     RECORD_FORMAT_VERSION,
     CaseResult,
+    aggregate_cost,
     code_version,
     make_run_id,
     summarise,
@@ -36,6 +37,7 @@ class TestSet:
     file_list_checksum: str = ""
     repeats: int = 1
     targets: Mapping[str, Mapping[str, Any]] = field(default_factory=dict)
+    close: Callable[[], None] | None = None  # called once the cases have run
 
 
 @dataclass
@@ -68,6 +70,8 @@ def run_test_set(
         for case_id in test_set.case_ids
     ]
     duration_s = time.perf_counter() - timer
+    if test_set.close is not None:
+        test_set.close()
     finished = datetime.now(INDIAN_TIME)
 
     results, hard_failures = summarise(cases, test_set.targets)
@@ -94,7 +98,7 @@ def run_test_set(
         "results": results,
         "hard_failures": hard_failures,
         "verdict": verdict_for(results, hard_failures),
-        "cost": dict(info.cost),
+        "cost": {**info.cost, **aggregate_cost(cases)},
         "baseline_run_id": None,
         "notes": info.notes,
     }

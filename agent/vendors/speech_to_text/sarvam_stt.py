@@ -9,6 +9,7 @@ from livekit.plugins import sarvam
 
 from settings import Settings
 
+DEFAULT_URL = "wss://api.sarvam.ai/speech-to-text-realtime/ws"
 _NEEDED = ("SARVAM_API_KEY", "SARVAM_STT_MODE", "SARVAM_STT_LANGUAGE", "SARVAM_STT_STREAM_TYPE")
 
 
@@ -20,6 +21,8 @@ def build_speech_to_text(settings: Settings) -> stt.STT[Any]:
         mode=settings.get("SARVAM_STT_MODE"),
         stream_type=settings.get("SARVAM_STT_STREAM_TYPE"),
         sample_rate=16000,
+        # Empty in normal use. The fault checks point it at a dead address.
+        base_url=settings.get("SARVAM_STT_URL") or DEFAULT_URL,
     )
 
 

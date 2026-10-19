@@ -43,6 +43,7 @@ class CaseResult:
     reasoning: str | None = None  # the judge's reasoning, left out for hidden sets
     timings_ms: dict[str, float] = field(default_factory=dict)  # stage -> milliseconds
     cost_inr: float = 0.0
+    cost_by: dict[str, float] = field(default_factory=dict)  # vendor -> rupees
     error: str | None = None
 
 
@@ -51,6 +52,20 @@ def percentile(values: Sequence[float], pct: float) -> float:
     ordered = sorted(values)
     rank = max(1, math.ceil(pct / 100 * len(ordered)))
     return ordered[rank - 1]
+
+
+def aggregate_cost(cases: Sequence[CaseResult]) -> dict[str, Any]:
+    """Cost of the run per vendor and in total, plus the cost of 1,000 cases."""
+    by_vendor: dict[str, float] = {}
+    for c in cases:
+        for vendor, value in c.cost_by.items():
+            by_vendor[vendor] = by_vendor.get(vendor, 0.0) + value
+    total = sum(c.cost_inr for c in cases)
+    out: dict[str, Any] = {k: round(v, 4) for k, v in sorted(by_vendor.items())}
+    out["total_inr"] = round(total, 4)
+    if cases:
+        out["per_1000_cases_inr"] = round(total / len(cases) * 1000, 2)
+    return out
 
 
 def make_run_id(level: str, test_set: str, now: datetime | None = None) -> str:
