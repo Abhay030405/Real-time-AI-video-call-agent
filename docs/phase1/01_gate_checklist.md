@@ -12,7 +12,7 @@ All numbers below come from **local runs on the founder's laptop with the servic
 
 | # | Gate item | Status | Evidence |
 |---|---|---|---|
-| 1 | A 5-minute English chat and a 5-minute Hinglish chat run without breaking | **FOUNDER** | A scripted call works end to end (greeting, hearing, answer). A person has not yet done the two 5-minute chats. How: `docker compose up -d livekit agent web`, open `http://localhost:3000`, press "Start talking", talk for 5 minutes in English, then 5 minutes in Hinglish. Then run `scripts/timing_report.py` and read the numbers |
+| 1 | A 5-minute English chat and a 5-minute Hinglish chat run without breaking | **Partly checked** | The founder made one real call on 19 Oct 2026 (21:15 to 21:20 UTC, 4 min 53 s, 19 spoken turns, then a clean close). M1 answered every turn, no fallback to M2, no filler, no crash, ₹11.6 in total. It is not recorded which language was spoken, because spoken words are never logged. The second 5-minute chat is still needed, so that there is one English and one Hinglish chat |
 | 2 | Sarvam meaning-error rate on Hinglish clips is 5% or less | **Postponed** | Needs the recorded clips (`docs/not_implemented_features.md`). Until then, Sarvam is checked by the scripted call: a Hinglish sentence came back as "Haan yaar main bilkul theek hoon. Aaj ka din kaisa tha tumhara?" |
 | 3 | M1 first word at the 95th percentile is 0.7 s or less | **Passed locally** | 182 ms (working set, 40 replies) and 175 ms (hidden set, 20 replies). Records: `evals/results/2026-10/…_L1_l1-models_uxoj.json` and `…_naek.json`. Re-measure from Mumbai after the deploy |
 | 4 | Killing M1 switches to M2 within 1.5 s with one filler | **Passed** | `scripts/fault_checks.py`: M2 answered, one filler played (first word 1,546 ms after the request, so M1 was given up on at once and the filler covered the wait). Also `agent/tests/test_faults.py`. The fault exists from the start of the call; it is not switched on in the middle of one |
@@ -26,8 +26,12 @@ All numbers below come from **local runs on the founder's laptop with the servic
 |---|---|---|
 | L1 models | Run (working and hidden) | M1 first word p50 163 ms, p95 182 ms. M2 first word p50 1,161 ms, p95 1,932 ms. S1 first word p50 1,249 ms, p95 2,469 ms. Cost per 1,000 replies is about ₹8 for M1 (see the price warning below). Reply-quality scoring is postponed |
 | L1 voice (speed) | Run (working and hidden) | Cartesia first audio p50 146 ms, p95 209 ms. Bulbul (backup) p50 847 ms, p95 1,152 ms. One Bulbul sentence took 5.5 s in the hidden set |
-| L1 voice (rating) | **FOUNDER** | 70 clips are saved in `storage/main/l1_voice/v1/working/` and 30 in `…/hidden/`. Listen and fill in `ratings.csv` (1 to 5 for each voice). Then run `uv run --project agent python -m evals.runner l1_voice --split working` again; the average must be 4.0 or more and no sentence rated 1 |
+| L1 voice (rating) | **FOUNDER** (no ratings found on 20 Oct: all 100 cells in the two `ratings.csv` files are empty) | 70 clips are saved in `storage/main/l1_voice/v1/working/` and 30 in `…/hidden/`. Listen and fill in `ratings.csv` (1 to 5 for each voice). Then run `uv run --project agent python -m evals.runner l1_voice --split working` again; the average must be 4.0 or more and no sentence rated 1 |
 | L1 speech-to-text | Postponed | Needs the recorded clips |
+
+## A measurement caveat from the real call
+
+In the real call the logs show a turn-detection time of about 2 ms on 18 of 19 turns, and a total reply time of about 0.45 s. That cannot be the whole story: it means the moment the page stamps as "speech ended" comes almost at the same time as the turn is committed, so the wait for the turn to be detected is missing. The one turn that carried LiveKit's own measure showed a turn-end delay of about 1.5 s. So the time a person actually waits is probably nearer 1.5 to 2 s than 0.45 s. The scripted calls (about 0.84 s turn detection, 1.24 s total at the median) were measured correctly. The fix is to use LiveKit's end-of-utterance measure for that stage in real calls; until then, real-call totals understate the wait. The proper measurement is the Phase 5 audio test robot.
 
 ## What a person should also do
 
