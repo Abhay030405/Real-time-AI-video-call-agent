@@ -59,6 +59,9 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    volumes:
+      # Timing and cost logs land in storage/telemetry on this machine (ignored by git)
+      - ./storage/telemetry:/app/storage/telemetry
     restart: unless-stopped
 
   web:

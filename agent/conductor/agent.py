@@ -9,6 +9,7 @@ from livekit.agents import Agent, ModelSettings, llm
 
 import rules_check
 from reliability.filler import FillerTimer
+from telemetry import TurnRecorder
 
 INSTRUCTIONS_FILE = (
     Path(__file__).resolve().parents[1] / "prompts" / "layer0_identity" / "phase1_placeholder.md"
@@ -30,9 +31,15 @@ def has_words(chunk: llm.ChatChunk | str | object) -> bool:
 
 
 class VaaniAgent(Agent):
-    def __init__(self, instructions: str, filler: FillerTimer | None = None) -> None:
+    def __init__(
+        self,
+        instructions: str,
+        filler: FillerTimer | None = None,
+        recorder: TurnRecorder | None = None,
+    ) -> None:
         super().__init__(instructions=instructions)
         self._filler = filler
+        self._recorder = recorder
 
     async def on_user_turn_completed(
         self, turn_ctx: llm.ChatContext, new_message: llm.ChatMessage
@@ -49,13 +56,18 @@ class VaaniAgent(Agent):
         model_settings: ModelSettings,
     ) -> AsyncIterable[llm.ChatChunk | str]:
         """Ask the brain. If the first word is late, one filler plays (V0_04 section 9)."""
+        if self._recorder is not None:
+            self._recorder.llm_requested()
         if self._filler is not None:
             self._filler.start()
         try:
             stream = Agent.default.llm_node(self, chat_ctx, tools, model_settings)
             async for chunk in await _resolve(stream):
-                if self._filler is not None and has_words(chunk):
-                    self._filler.first_word()
+                if has_words(chunk):
+                    if self._filler is not None:
+                        self._filler.first_word()
+                    if self._recorder is not None:
+                        self._recorder.first_word()
                 yield chunk
         finally:
             if self._filler is not None:

@@ -221,5 +221,6 @@ Filled in as each phase creates them.
 | Live round trip through our own vendor connections (voice, hearing, brain) | `uv run --project agent python scripts/check_vendors.py` |
 | Scripted call with no human (needs `docker compose up -d livekit agent web`) | `uv run --project agent python scripts/smoke_call.py` |
 | Remake the filler and apology clips in Vaani's voice | `uv run --project agent python scripts/make_clips.py` |
+| Speed (50th/95th/99th) and cost per call from the logs in `storage/telemetry` | `uv run --project agent python scripts/timing_report.py` |
 | Check the test runner with the dummy set | `uv run --project agent python -m evals.runner --dummy --out <temp folder>` |
 | Run a real evaluation set | added with each test set (`evals/runner`) |
