@@ -74,3 +74,45 @@ class FakeLLM(llm.LLM[Any]):
         extra_kwargs: NotGivenOr[dict[str, Any]] = NOT_GIVEN,
     ) -> llm.LLMStream:
         return FakeStream(self, chat_ctx=chat_ctx, tools=tools or [], conn_options=conn_options)
+
+
+# ---- fake voices ----
+
+from livekit.agents import tts  # noqa: E402
+
+
+class FakeChunked(tts.ChunkedStream):
+    async def _run(self, output_emitter: tts.AudioEmitter) -> None:
+        fake = self._tts
+        assert isinstance(fake, FakeTTS)
+        fake.calls += 1
+        if fake.broken:
+            raise APIConnectionError("fake voice outage", retryable=True)
+        output_emitter.initialize(
+            request_id="fake", sample_rate=24000, num_channels=1, mime_type="audio/pcm"
+        )
+        output_emitter.push(b"\x01\x00" * 2400)
+        output_emitter.flush()
+
+
+class FakeTTS(tts.TTS):
+    def __init__(self, name: str, broken: bool = False) -> None:
+        super().__init__(
+            capabilities=tts.TTSCapabilities(streaming=False), sample_rate=24000, num_channels=1
+        )
+        self.name = name
+        self.broken = broken
+        self.calls = 0
+
+    @property
+    def model(self) -> str:
+        return self.name
+
+    @property
+    def provider(self) -> str:
+        return "fake"
+
+    def synthesize(
+        self, text: str, *, conn_options: APIConnectOptions = DEFAULT_API_CONNECT_OPTIONS
+    ) -> tts.ChunkedStream:
+        return FakeChunked(tts=self, input_text=text, conn_options=conn_options)

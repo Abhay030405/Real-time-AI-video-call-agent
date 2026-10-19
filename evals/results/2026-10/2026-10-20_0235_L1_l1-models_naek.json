@@ -1,0 +1,228 @@
+{
+  "record_format_version": 1,
+  "run_id": "2026-10-20_0235_L1_l1-models_naek",
+  "started_at": "2026-10-20T02:35:38+05:30",
+  "finished_at": "2026-10-20T02:36:40+05:30",
+  "duration_s": 62.059,
+  "machine": "founder laptop (Windows), local run, not Mumbai",
+  "triggered_by": "founder, by hand",
+  "purpose": "Phase 1 gate, local Docker-era run (not Mumbai)",
+  "level": "L1",
+  "test_set": {
+    "name": "l1_models",
+    "version": "v1",
+    "split": "hidden",
+    "file_list_checksum": "sha256:438ce86f56f4a4a9",
+    "case_count": 60
+  },
+  "repeats": 1,
+  "code": {
+    "commit": "1eb1009",
+    "dirty": true
+  },
+  "prompts": {
+    "layer0_placeholder": "sha256:d0e7238c2f91a384"
+  },
+  "settings": {
+    "values": {
+      "APP_ENV": "development",
+      "BULBUL_LANGUAGE": "hi-IN",
+      "BULBUL_MODEL": "bulbul:v3",
+      "BULBUL_SPEAKER": "priya",
+      "CARTESIA_LANGUAGE": "hi",
+      "CARTESIA_MODEL": "sonic-3.6",
+      "CARTESIA_SAMPLE_RATE": "24000",
+      "CARTESIA_VOICE_ID": "28ca2041-5dda-42df-8123-f58ea9c3da00",
+      "CARTESIA_WORD_TIMESTAMPS": "false",
+      "FILLER_AFTER_S": "1.0",
+      "JEV_MODEL": "jev-latest",
+      "LIVEKIT_URL": "ws://localhost:7880",
+      "M1_BASE_URL": "https://api.sarvam.ai/v1",
+      "M1_FAILS_BEFORE_BREAKER": "2",
+      "M1_MODEL": "sarvam-105b-conversations",
+      "M1_PROVIDER": "sarvam",
+      "M1_SWITCH_AFTER_S": "1.5",
+      "M2_FIRST_WORD_LIMIT_S": "5.0",
+      "M2_MODEL": "google/gemini-3.5-flash-lite",
+      "M2_STAY_MINUTES": "5",
+      "PRICE_BULBUL_INR_PER_10K_CHARS": "30",
+      "PRICE_CARTESIA_USD_PER_1K_CHARS": "0.05",
+      "PRICE_M1_INPUT_INR_PER_M": "29.28",
+      "PRICE_M1_OUTPUT_INR_PER_M": "73.2",
+      "PRICE_M2_INPUT_USD_PER_M": "0.3",
+      "PRICE_M2_OUTPUT_USD_PER_M": "2.5",
+      "PRICE_S1_INPUT_USD_PER_M": "0.25",
+      "PRICE_S1_OUTPUT_USD_PER_M": "1.5",
+      "PRICE_SARVAM_STT_INR_PER_HOUR": "30",
+      "REJOIN_VALID_MINUTES": "30",
+      "S1_MODEL": "google/gemini-3.1-flash-lite",
+      "S1_PROVIDER": "openrouter",
+      "SARVAM_STT_LANGUAGE": "auto",
+      "SARVAM_STT_MODE": "translit",
+      "SARVAM_STT_STREAM_TYPE": "balanced",
+      "STT_FAILS_IN_A_ROW": "2",
+      "STT_MIN_SPEECH_S": "1.0",
+      "STT_NO_RESPONSE_LIMIT_S": "5",
+      "TELEMETRY_DIR": "storage/telemetry",
+      "TEST_MATERIAL_BACKUP_DIR": "storage/backup",
+      "TEST_MATERIAL_DIR": "storage/main",
+      "TURN_DETECTION": "multilingual",
+      "USD_INR": "88.0",
+      "USD_INR_DATE": "2026-10-19"
+    },
+    "fingerprint": "sha256:a5fcf6a81d886647"
+  },
+  "vendors": {
+    "speech_to_text": {
+      "provider": "sarvam",
+      "model": "saaras:v3-realtime",
+      "language": "auto",
+      "mode": "translit",
+      "stream_type": "balanced"
+    },
+    "voice": {
+      "provider": "cartesia",
+      "model": "sonic-3.6",
+      "voice_id": "28ca2041-5dda-42df-8123-f58ea9c3da00",
+      "language": "hi",
+      "sample_rate": "24000"
+    },
+    "backup_voice": {
+      "provider": "sarvam",
+      "model": "bulbul:v3",
+      "speaker": "priya",
+      "language": "hi-IN"
+    },
+    "brain_m1": {
+      "provider": "sarvam",
+      "model": "sarvam-105b-conversations",
+      "base_url": "https://api.sarvam.ai/v1"
+    },
+    "brain_m2": {
+      "provider": "openrouter",
+      "model": "google/gemini-3.5-flash-lite"
+    },
+    "helper_s1": {
+      "provider": "openrouter",
+      "model": "google/gemini-3.1-flash-lite"
+    },
+    "reliability": {
+      "switch_after_s": "1.5",
+      "m2_first_word_limit_s": "5.0",
+      "fails_before_breaker": "2",
+      "m2_stay_minutes": "5"
+    }
+  },
+  "judge": {},
+  "results": [
+    {
+      "name": "has_reply",
+      "kind": "hard",
+      "value": 60,
+      "n": 60,
+      "target": "all pass",
+      "passed": true
+    },
+    {
+      "name": "spoken_style",
+      "kind": "hard",
+      "value": 60,
+      "n": 60,
+      "target": "all pass",
+      "passed": true
+    },
+    {
+      "name": "m1_first_word_ms",
+      "kind": "time_ms",
+      "n": 20,
+      "percentiles": {
+        "p50": 157.21480000502197,
+        "p95": 175.38319999584928,
+        "p99": 416.1504999938188,
+        "samples": 20
+      },
+      "target": {
+        "max": 700,
+        "at": "p95"
+      },
+      "passed": true
+    },
+    {
+      "name": "m1_total_ms",
+      "kind": "time_ms",
+      "n": 20,
+      "percentiles": {
+        "p50": 261.2599999993108,
+        "p95": 289.47799999878043,
+        "p99": 479.4426000007661,
+        "samples": 20
+      },
+      "target": null,
+      "passed": null
+    },
+    {
+      "name": "m2_first_word_ms",
+      "kind": "time_ms",
+      "n": 20,
+      "percentiles": {
+        "p50": 1072.667000000365,
+        "p95": 1564.2399999996996,
+        "p99": 2407.19170000375,
+        "samples": 20
+      },
+      "target": null,
+      "passed": null
+    },
+    {
+      "name": "m2_total_ms",
+      "kind": "time_ms",
+      "n": 20,
+      "percentiles": {
+        "p50": 1353.0307999972138,
+        "p95": 1853.6875999998301,
+        "p99": 2440.215000002354,
+        "samples": 20
+      },
+      "target": null,
+      "passed": null
+    },
+    {
+      "name": "s1_first_word_ms",
+      "kind": "time_ms",
+      "n": 20,
+      "percentiles": {
+        "p50": 1156.1896999992314,
+        "p95": 1506.756900002074,
+        "p99": 1559.161299999687,
+        "samples": 20
+      },
+      "target": null,
+      "passed": null
+    },
+    {
+      "name": "s1_total_ms",
+      "kind": "time_ms",
+      "n": 20,
+      "percentiles": {
+        "p50": 1337.3624000014388,
+        "p95": 1639.3060999980662,
+        "p99": 1784.5532999999705,
+        "samples": 20
+      },
+      "target": null,
+      "passed": null
+    }
+  ],
+  "hard_failures": [],
+  "verdict": "pass",
+  "cost": {
+    "exchange_rate": "88.0 on 2026-10-19",
+    "m1": 0.1598,
+    "m2": 0.2444,
+    "s1": 0.1647,
+    "total_inr": 0.5689,
+    "per_1000_cases_inr": 9.48
+  },
+  "baseline_run_id": null,
+  "notes": ""
+}

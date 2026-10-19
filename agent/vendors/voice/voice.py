@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+import aiohttp
 from livekit.agents import tts
 from livekit.plugins import cartesia, sarvam
 
@@ -23,7 +24,9 @@ _NEEDED = (
 )
 
 
-def build_cartesia(settings: Settings) -> tts.TTS[Any]:
+def build_cartesia(
+    settings: Settings, http_session: aiohttp.ClientSession | None = None
+) -> tts.TTS[Any]:
     return cartesia.TTS(
         api_key=settings.get("CARTESIA_API_KEY"),
         model=settings.get("CARTESIA_MODEL"),
@@ -31,16 +34,20 @@ def build_cartesia(settings: Settings) -> tts.TTS[Any]:
         language=settings.get("CARTESIA_LANGUAGE"),
         sample_rate=settings.get_int("CARTESIA_SAMPLE_RATE"),
         word_timestamps=settings.get("CARTESIA_WORD_TIMESTAMPS") == "true",
+        http_session=http_session,
     )
 
 
-def build_bulbul(settings: Settings) -> tts.TTS[Any]:
+def build_bulbul(
+    settings: Settings, http_session: aiohttp.ClientSession | None = None
+) -> tts.TTS[Any]:
     return sarvam.TTS(
         api_key=settings.get("SARVAM_API_KEY"),
         model=settings.get("BULBUL_MODEL"),
         speaker=settings.get("BULBUL_SPEAKER"),
         target_language_code=settings.get("BULBUL_LANGUAGE"),
         speech_sample_rate=settings.get_int("CARTESIA_SAMPLE_RATE"),  # same rate on both voices
+        http_session=http_session,
     )
 
 

@@ -21,6 +21,7 @@ vaani/
 ├── docs/                         All design documents (the source of truth for what gets built)
 │   ├── reading_engine/           The parent document: decisions RE-D1 to RE-D13
 │   ├── phase0/                   Phase 0 working documents (accounts checklist, recording kit, result record design)
+│   ├── phase1/                   Phase 1 working documents (the gate checklist)
 │   └── v0/                       V0_00 to V0_07 and the build phases
 │
 ├── agent/                        The LiveKit agent in Python, running in Mumbai

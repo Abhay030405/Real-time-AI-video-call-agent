@@ -1,43 +1,82 @@
-"""`python -m evals.runner --dummy` runs the dummy test set and writes a result record.
+"""Runs a test set and writes a result record.
 
-Run it from the repository root: `uv run --project agent python -m evals.runner --dummy`.
-Real test sets are added with the features that need them.
+    uv run --project agent python -m evals.runner --dummy
+    uv run --project agent python -m evals.runner l1_models --split working
+    uv run --project agent python -m evals.runner l1_voice --split hidden
+
+Run it from the repository root. Records go to `evals/results/<YYYY-MM>/` (or `--out`).
+Until the LiveKit Cloud deploy, every record says it was a local run, not a Mumbai run.
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import platform
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "agent"))
 
-from settings import REPO_ROOT, load_settings  # noqa: E402
+from conductor.agent import INSTRUCTIONS_FILE  # noqa: E402
+from settings import REPO_ROOT, Settings, load_settings  # noqa: E402
+from vendors.brain import describe_brain  # noqa: E402
+from vendors.speech_to_text import describe_speech_to_text  # noqa: E402
+from vendors.voice import describe_voice  # noqa: E402
 
 from .dummy import dummy_test_set  # noqa: E402
-from .runner import RunInfo, run_test_set  # noqa: E402
+from .l1_models import l1_models_test_set  # noqa: E402
+from .l1_voice import l1_voice_test_set  # noqa: E402
+from .runner import RunInfo, TestSet, run_test_set  # noqa: E402
+
+SETS = ("l1_models", "l1_voice")
+
+
+def build_info(settings: Settings, purpose: str) -> RunInfo:
+    instructions = hashlib.sha256(INSTRUCTIONS_FILE.read_bytes()).hexdigest()[:16]
+    return RunInfo(
+        machine=f"founder laptop ({platform.system()}), local run, not Mumbai",
+        triggered_by="founder, by hand",
+        purpose=purpose,
+        settings={"values": settings.public(), "fingerprint": settings.fingerprint()},
+        prompts={"layer0_placeholder": "sha256:" + instructions},
+        vendors={
+            "speech_to_text": describe_speech_to_text(settings),
+            **describe_voice(settings),
+            **describe_brain(settings),
+        },
+        cost={"exchange_rate": f"{settings.get('USD_INR')} on {settings.get('USD_INR_DATE')}"},
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="evals.runner")
+    parser.add_argument("test_set", nargs="?", choices=SETS, help="which test set to run")
     parser.add_argument("--dummy", action="store_true", help="run the built-in dummy test set")
+    parser.add_argument("--split", choices=("working", "hidden"), default="working")
+    parser.add_argument("--purpose", default="")
     parser.add_argument("--out", type=Path, default=REPO_ROOT / "evals" / "results")
     args = parser.parse_args(argv)
-    if not args.dummy:
-        parser.error("only --dummy exists so far; real test sets arrive with their features")
+    if not args.dummy and not args.test_set:
+        parser.error("name a test set (" + ", ".join(SETS) + ") or use --dummy")
 
     settings = load_settings()
-    info = RunInfo(
-        machine=f"{platform.node()}, {platform.system()}",
-        triggered_by="founder, by hand",
-        purpose="Runner check with the dummy test set",
-        settings={"values": settings.public(), "fingerprint": settings.fingerprint()},
-    )
+    test_set: TestSet
+    if args.dummy:
+        test_set = dummy_test_set()
+    elif args.test_set == "l1_models":
+        test_set = l1_models_test_set(settings, args.split)
+    else:
+        test_set = l1_voice_test_set(settings, args.split)
+    purpose = args.purpose or f"{test_set.name} {args.split} run"
     summary, summary_path, cases_path = run_test_set(
-        dummy_test_set(), info, args.out, REPO_ROOT
+        test_set, build_info(settings, purpose), args.out, REPO_ROOT
     )
     print(f"{summary['run_id']}: {summary['verdict']}")
+    for result in summary["results"]:
+        shown = result.get("percentiles") or result.get("value")
+        print(f"  {result['name']}: {shown}  passed={result.get('passed')}")
+    print("cost:", summary["cost"])
     print(summary_path)
     print(cases_path)
     return 0

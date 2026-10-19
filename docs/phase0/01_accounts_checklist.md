@@ -32,7 +32,7 @@ Status: v0.1 · 19 Oct 2026 · Part of Phase 0 (`docs/v0/vaani_build_phase_v0.md
 - [ ] Fill in both paths in the root `.env`.
 - Cloud storage in India (Oracle was the earlier choice) is moved to later and is chosen again before Phase 4.
 
-### 3. LiveKit Cloud
+### 3. LiveKit Cloud (postponed: everything runs in local Docker until the deploy; see `docs/not_implemented_features.md`)
 
 - [ ] Sign up and create a project named `vaani-dev`.
 - [ ] Check the agent can be deployed to the **Mumbai** region.
