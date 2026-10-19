@@ -17,8 +17,9 @@ from pathlib import Path
 # Names that hold a secret. Their values are never shown, logged or saved in result records.
 _SECRET_NAME = re.compile(r"(_KEY|_SECRET|_PASSWORD|_TOKEN)$|^(DATABASE_URL|REDIS_URL)$")
 
-# agent/settings/settings.py -> repository root
-REPO_ROOT = Path(__file__).resolve().parents[2]
+# agent/settings/settings.py -> repository root. In the Docker image the code sits in /app, so
+# the image sets VAANI_ROOT=/app instead.
+REPO_ROOT = Path(os.environ.get("VAANI_ROOT") or Path(__file__).resolve().parents[2])
 
 
 class SettingsError(Exception):

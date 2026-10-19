@@ -11,7 +11,10 @@ FROM python:3.12-slim
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     UV_COMPILE_BYTECODE=1 \
-    UV_LINK_MODE=copy
+    UV_LINK_MODE=copy \
+    VAANI_ROOT=/app \
+    HF_HOME=/app/.hf-cache \
+    PATH="/app/.venv/bin:$PATH"
 
 # uv installs Python packages quickly and reproducibly from the lock file
 COPY --from=ghcr.io/astral-sh/uv:0.5.11 /uv /usr/local/bin/uv
@@ -27,11 +30,13 @@ RUN uv sync --frozen --no-dev --no-install-project
 # Our code, Vaani's prompts and her pre-recorded clips
 COPY agent/ ./
 COPY assets/audio/ ./assets/audio/
+# Setting names and defaults only (no secrets): the settings reader checks names against it
+COPY .env.example ./.env.example
 RUN uv sync --frozen --no-dev
 
 # Download model files the agent needs at start (for example LiveKit's
 # turn detector), so calls don't wait for a download
-RUN uv run main.py download-files
+RUN python main.py download-files && chown -R vaani:vaani /app/.hf-cache
 
 USER vaani
-CMD ["uv", "run", "main.py", "start"]
+CMD ["python", "main.py", "start"]
