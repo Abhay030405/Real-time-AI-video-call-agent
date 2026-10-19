@@ -51,7 +51,7 @@ Production monitoring (section 10) sits beside the pyramid once real people use 
 
 | Part | Test set | Measures | V0 target |
 |---|---|---|---|
-| **Speech-to-text (Sarvam)** | 200+ short clips recorded by the founder and 5 to 6 volunteers (about 30 to 35 clips each): pure English, pure Hindi, Hinglish mixed, with fan or traffic noise, plus Indian names and places. Each has a correct written transcript | **Word error rate** (share of words wrong), and **meaning-error rate** (share of clips where the mistake changes the meaning, checked by the AI judge) | Meaning-error rate ≤ 5% on Hinglish clips. Word error rate recorded; starting target ≤ 18%. There is no backup service, so this is a hard stop in Phase 1 |
+| **Speech-to-text (Sarvam)** — *postponed, see `docs/not_implemented_features.md`* | 200+ short clips recorded by the founder and 5 to 6 volunteers (about 30 to 35 clips each): pure English, pure Hindi, Hinglish mixed, with fan or traffic noise, plus Indian names and places. Each has a correct written transcript | **Word error rate** (share of words wrong), and **meaning-error rate** (share of clips where the mistake changes the meaning, checked by the AI judge) | Meaning-error rate ≤ 5% on Hinglish clips. Word error rate recorded; starting target ≤ 18%. There is no backup service, so this is a hard stop in Phase 1 |
 | **Main model (M1, M2)** | 60 conversation snippets in English and Hinglish | Time to first word (50th/95th/99th), reply quality score, cost per 1,000 replies | M1 first-word time at the 95th percentile ≤ 700 ms from Mumbai |
 | **Helper model (S1)** | 30 conversations to summarise | Summary keeps key facts (judge) | ≥ 90% facts kept |
 | **Decision model (Jev)** | 30 conversations, each tagged by the founder with the right skill, intensity, heavy-disclosure yes/no and Hinglish level | Agreement with the founder's tags; answer time from Mumbai (50th/95th/99th) | Skill choice agrees ≥ 85%; heavy-disclosure agrees ≥ 90% |
@@ -239,7 +239,7 @@ These are **starting targets.** The founder may change a target once, with a wri
 | 3 | Hard rules in `V0_03` section 1 | **All** pass | L2, L3, L6 |
 | 4 | Reply time, voice only | 50th ≤ 1.3 s, 95th ≤ 2.0 s, 99th ≤ 3.0 s | L4 |
 | 5 | Reply time, with face | 95th ≤ 2.5 s | L4 |
-| 6 | Hinglish speech | Meaning-error rate ≤ 5% | L1 |
+| 6 | Hinglish speech *(postponed with the recorded clips; see `docs/not_implemented_features.md`)* | Meaning-error rate ≤ 5% | L1 |
 | 7 | Recall of an early detail | ≥ 90% of simulated 20-minute talks | L3 |
 | 8 | Wrap-up on time | 100% | L3 |
 | 9 | Character holds (judge, average at minute 20) | ≥ 4.0 | L3 |

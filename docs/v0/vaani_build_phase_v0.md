@@ -46,14 +46,14 @@ After Phase 5: version 0.5, the Reading Engine (see its build plan, RE-1 to RE-8
 - **The result record:** the format every evaluation run saves (date, code version, every layer and model version, test set version, judge version, scores with spread, cost).
 - **The test runner skeleton:** runs a named test set and saves a result record. Empty test sets are fine at this stage.
 - **Recorded material:**
-  - Speech-to-text test clips (200+): pure English, pure Hindi, Hinglish, with fan or traffic noise, Indian names and places, each with a correct transcript. From people who agreed in writing.
+  - *Postponed (founder decision, 19 Oct 2026; see `docs/not_implemented_features.md`):* speech-to-text test clips (200+): pure English, pure Hindi, Hinglish, with fan or traffic noise, Indian names and places, each with a correct transcript. From people who agreed in writing.
   - The ~30 turn-taking scripts (thinking pauses of 2, 4 and 6 seconds, "hmm", "haan", coughs, real interruptions, background noise), **recorded with video** (RE-D13).
 
 ### Exit gate
 - [ ] One command runs the quick checks by hand, and it passes on the empty repository.
 - [ ] The test runner produces a valid result record from a dummy test.
 - [ ] Every Phase 0 account works with a test request, and spending limits are set.
-- [ ] Speech clips and video scripts are stored, versioned, with consent records.
+- [ ] Video turn-taking scripts are stored, versioned, with consent records. (Speech clips are postponed.)
 
 ---
 
@@ -76,13 +76,13 @@ After Phase 5: version 0.5, the Reading Engine (see its build plan, RE-1 to RE-8
 - LiveKit set up so standard turn detection can later be replaced by manual turn control (Reading Engine plug-in point).
 
 ### Tests written in this phase
-- **L1 speech-to-text:** word error rate and meaning-error rate on the recorded clips.
+- ~~**L1 speech-to-text:** word error rate and meaning-error rate on the recorded clips.~~ Postponed with the clips (`docs/not_implemented_features.md`).
 - **L1 models:** first-word time (50th/95th/99th) from Mumbai, reply quality, cost per 1,000 replies.
 - **L1 voice:** 50 sentences with Hinglish words, names and numbers, rated 1 to 5; time to first audio.
 
 ### Exit gate
 - [ ] A 5-minute English chat and a 5-minute Hinglish chat run without breaking.
-- [ ] Sarvam meaning-error rate on Hinglish clips is **5% or less**. (If not, this phase stops here until solved; there is no backup service to switch to.)
+- ~~Sarvam meaning-error rate on Hinglish clips is **5% or less**.~~ Postponed with the clips. Until it runs, Sarvam is checked only by the 5-minute English and Hinglish chats above.
 - [ ] M1 first-word time at the 95th percentile is **0.7 s or less** from Mumbai.
 - [ ] Killing M1 mid-call switches to M2 within 1.5 s with one filler.
 - [ ] Killing Cartesia switches to the backup voice.
