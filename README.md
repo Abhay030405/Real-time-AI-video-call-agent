@@ -45,8 +45,10 @@ vaani/
 │   └── tests/                    Unit tests for the agent's own code
 │
 ├── web/                          The page the person opens (from LiveKit's ready-made starter)
-│   ├── .env / .env.example       Page settings; only NEXT_PUBLIC_ names reach the browser, never secrets
+│   ├── .env / .env.example       Page settings (server side only); only NEXT_PUBLIC_ names reach the browser, never secrets
 │   ├── Dockerfile                Web page image
+│   ├── app/, components/, hooks/, lib/, styles/   The starter's own folders. `app/api/token` makes each call's access pass, `lib/settings.ts` is the only reader of `web/.env`, `styles/globals.css` holds every colour, font and size
+│   ├── tests/                    Unit tests for the page's settings and token route
 │   ├── consent/                  Adults only, what is recorded, vendor list
 │   ├── call/                     The call itself: microphone, avatar, camera permission
 │   ├── feedback/                 The six-question form after each session
