@@ -26,7 +26,13 @@ const VIEW_MOTION_PROPS = {
   },
 };
 
-export function ViewController() {
+interface ViewControllerProps {
+  /** Shown on the welcome view after Vaani ended a call herself. */
+  notice?: string | null;
+  onStart?: () => void;
+}
+
+export function ViewController({ notice, onStart }: ViewControllerProps) {
   const { isConnected, start } = useSessionContext();
   const agent = useAgent();
 
@@ -38,7 +44,11 @@ export function ViewController() {
           key="welcome"
           {...VIEW_MOTION_PROPS}
           startButtonText="Start talking"
-          onStartCall={start}
+          notice={notice}
+          onStartCall={() => {
+            onStart?.();
+            start();
+          }}
         />
       )}
       {/* Session view */}
