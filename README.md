@@ -20,11 +20,13 @@ vaani/
 ├── .dockerignore                 Keeps secrets, docs and test data out of the agent image
 ├── docs/                         All design documents (the source of truth for what gets built)
 │   ├── reading_engine/           The parent document: decisions RE-D1 to RE-D13
+│   ├── phase0/                   Phase 0 working documents (accounts checklist, recording kit, result record design)
 │   └── v0/                       V0_00 to V0_07 and the build phases
 │
 ├── agent/                        The LiveKit agent in Python, running in Mumbai
 │   ├── Dockerfile                Agent image, used locally and for LiveKit Cloud deploys
 │   ├── conductor/                Our own layer: one turn from start to finish, the session clock
+│   ├── settings/                 The one place that reads .env (keys, models, paths, tunable numbers)
 │   ├── prompts/                  Vaani's instructions, kept as text, versioned
 │   │   ├── layer0_identity/      Who Vaani is (never changes in a session)
 │   │   ├── layer1_rules/         Safety, honesty, age rule, priority order (never changes in a session)
@@ -84,15 +86,14 @@ vaani/
 
 ## Where recorded test material lives
 
-Speech clips and video turn-taking scripts are stored in a **private Oracle Cloud Object Storage bucket in Mumbai (`ap-mumbai-1`)**, not in the repository. The repository keeps only the file lists, versions and consent records under `evals/datasets/`. The recordings never leave India, and the tester consent form says so. Live user data (the session log, session stories) stays in PostgreSQL hosted in India.
+Speech clips and video turn-taking scripts are kept on **local drives, outside the repository** (founder decision, 19 Oct 2026, after the Oracle sign-up failed on card verification). The repository keeps only the file lists, versions and consent records under `evals/datasets/`. Everything stays in India.
 
-**Storage rules (to stay inside Oracle's free tier and never lose a take):**
+**Storage rules (never lose a take):**
 
-1. **Mumbai is the home region**, chosen at sign-up. Free resources only apply in the home region, and it can't be changed later.
-2. **Keep the bucket under 10 GB of regular storage.** That stays free whether the account is free-only or upgraded to paid.
-3. **Never be above 20 GB when the 30-day trial ends.** Oracle deletes all files if a trial ends above 20 GB without an upgrade.
-4. **Keep a second copy of every recording on the founder's own drive.** The version 0 vs version 0.5 comparison depends on the exact same takes (RE-D13); a lost take can't be re-recorded.
-5. Free limits for reference: 50,000 storage requests and 10 TB of downloads a month. A nightly run uses about 230 downloads.
+1. **Main copy:** a folder outside the repository on the founder's laptop (`TEST_MATERIAL_DIR` in `.env`), so recordings can never be committed or copied into a Docker image by mistake.
+2. **Second copy:** an external drive (`TEST_MATERIAL_BACKUP_DIR`), updated after every recording session. The version 0 vs version 0.5 comparison depends on the exact same takes (RE-D13); a lost take can't be re-recorded.
+3. **Every file is checked against its checksum** in the file list, so a damaged copy is noticed.
+4. **Cloud storage in India comes later, before Phase 4**, when tests start running away from the laptop. Options: Oracle Mumbai (if the card issue is fixed) or DigitalOcean Spaces Bangalore. Only the `.env` settings change.
 
 ## Not created yet (by design)
 
