@@ -1,0 +1,97 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@source "../node_modules/streamdown/dist/index.js";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Vaani look: warm, calm, quiet. Every colour, font, size and radius is defined here once. */
+  --radius: 0.75rem;
+  --background: oklch(0.975 0.008 85);
+  --foreground: oklch(0.24 0.012 60);
+  --card: oklch(0.99 0.006 85);
+  --card-foreground: oklch(0.24 0.012 60);
+  --popover: oklch(0.99 0.006 85);
+  --popover-foreground: oklch(0.24 0.012 60);
+  --primary: oklch(0.62 0.135 42);
+  --primary-hover: color-mix(in oklch, var(--primary) 85%, black);
+  --primary-foreground: oklch(0.985 0.005 85);
+  --secondary: oklch(0.945 0.012 80);
+  --secondary-foreground: oklch(0.28 0.012 60);
+  --muted: oklch(0.945 0.012 80);
+  --muted-foreground: oklch(0.52 0.015 65);
+  --accent: oklch(0.93 0.018 75);
+  --accent-foreground: oklch(0.28 0.012 60);
+  --destructive: oklch(0.577 0.2 27);
+  --border: oklch(0.89 0.012 80);
+  --input: oklch(0.89 0.012 80);
+  --ring: oklch(0.62 0.135 42 / 50%);
+}
+
+.dark {
+  --background: oklch(0.2 0.008 60);
+  --foreground: oklch(0.95 0.01 85);
+  --card: oklch(0.24 0.01 60);
+  --card-foreground: oklch(0.95 0.01 85);
+  --popover: oklch(0.27 0.01 60);
+  --popover-foreground: oklch(0.95 0.01 85);
+  --primary: oklch(0.72 0.125 48);
+  --primary-hover: color-mix(in oklch, var(--primary) 85%, black);
+  --primary-foreground: oklch(0.2 0.008 60);
+  --secondary: oklch(0.29 0.01 60);
+  --secondary-foreground: oklch(0.95 0.01 85);
+  --muted: oklch(0.29 0.01 60);
+  --muted-foreground: oklch(0.72 0.012 75);
+  --accent: oklch(0.34 0.012 60);
+  --accent-foreground: oklch(0.95 0.01 85);
+  --destructive: oklch(0.704 0.18 24);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.72 0.125 48 / 50%);
+}
+
+/* The toast pop-ups read their colours from the variables above */
+.toaster {
+  --normal-bg: var(--popover);
+  --normal-text: var(--popover-foreground);
+  --normal-border: var(--border);
+  --border-radius: var(--radius);
+}
+
+@theme inline {
+  --font-sans:
+    var(--font-public-sans), ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+    'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-display: var(--font-newsreader), ui-serif, Georgia, 'Times New Roman', serif;
+  --font-mono:
+    var(--font-commit-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    'Liberation Mono', 'Courier New', monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+@layer base {
+  * {
+    @apply border-foreground/20 outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}

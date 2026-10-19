@@ -68,7 +68,7 @@ Read the document for the area you are touching before planning. If code and doc
 | `agent/reliability/` | Fallbacks, hiccup lines logic, rejoin, admission control | — |
 | `agent/telemetry/` | Timing per stage, cost per vendor, logging | — |
 | `agent/tests/` | Unit tests for agent code, mirroring the folder names (`tests/conductor/`, `tests/vendors/`...) | Evaluation test sets |
-| `web/` | The Next.js page from LiveKit's starter, following its own folder rules, plus `web/consent/`, `web/call/`, `web/feedback/`, `web/hiccup/` for our features | Secrets behind `NEXT_PUBLIC_` |
+| `web/` | The Next.js page from LiveKit's starter, following its own folder rules (`app/`, `components/`, `hooks/`, `lib/`, `styles/`, `tests/`), plus `web/consent/`, `web/call/`, `web/feedback/`, `web/hiccup/` for our features | Secrets behind `NEXT_PUBLIC_` |
 | `assets/audio/<kind>/` | Pre-recorded clips in Vaani's voice: `fillers/`, `hiccup_lines/`, `apologies/` | Test recordings |
 | `evals/datasets/<level>_<name>/` | File lists, transcripts, labels and consent records for one test set, split into `working/` and `hidden/` | Audio or video files |
 | `evals/runner/` | The test runner | — |
@@ -106,13 +106,13 @@ Read the document for the area you are touching before planning. If code and doc
 5. **Never print, copy, log or commit the contents of `.env`.** Result records save the non-secret settings that affected a run (for example timeouts and model names), never keys.
 6. **Only the agent's server side holds keys.** In `web/`, a name starting with `NEXT_PUBLIC_` reaches the browser, so never put a key behind it.
 
-## 5. Web design: always through `global.css`
+## 5. Web design: always through `globals.css`
 
-1. **All colours, fonts, font sizes, spacing, corner rounding and shadows are defined once, as named variables, in the web page's single global stylesheet, `global.css`.**
+1. **All colours, fonts, font sizes, spacing, corner rounding and shadows are defined once, as named variables, in the web page's single global stylesheet, `globals.css`.**
 2. **Components use those variables only.** No colour codes, pixel sizes or font names typed into components, and no inline styles.
-3. **A new design value** (a new colour, say) is added to `global.css` first, with a clear name, then used.
-4. If the starter's styling tool (for example its utility classes) needs settings, it reads them from the `global.css` variables, never its own copies.
-5. Light and dark mode are handled in `global.css`, not in components.
+3. **A new design value** (a new colour, say) is added to `globals.css` first, with a clear name, then used.
+4. If the starter's styling tool (for example its utility classes) needs settings, it reads them from the `globals.css` variables, never its own copies.
+5. Light and dark mode are handled in `globals.css`, not in components.
 
 ## 6. Git and GitHub
 
@@ -195,7 +195,7 @@ The repository is private on GitHub. `main` must always work.
 | Part | Choice |
 |---|---|
 | Agent | Python, LiveKit Agents, LiveKit Cloud agent region Mumbai |
-| Web page | LiveKit's ready-made Next.js starter, styled only through `global.css` |
+| Web page | LiveKit's ready-made Next.js starter, styled only through `globals.css` |
 | Speech-to-text | Sarvam (only, no backup) |
 | Brain | M1 direct (India), M2 through OpenRouter, S1 helper — chosen in Phase 1 |
 | Decision model | Jev (TypeSafe), background only |
@@ -215,7 +215,8 @@ Filled in as each phase creates them.
 | Start everything locally | `docker compose up --build` |
 | Start only the database and cache | `docker compose up postgres redis` |
 | Start only the local call server (LiveKit) | `docker compose up livekit` |
-| Quick checks (style, types, unit tests, secret scan) | `python scripts/quick_checks.py` |
+| Quick checks (style, types, unit tests for agent and web, secret scan) | `python scripts/quick_checks.py` |
+| Web page commands (run in `web/`) | `corepack pnpm@9.15.9 install`, `... dev`, `... test` |
 | Check every key in `.env` works (needs the local LiveKit server running) | `python scripts/check_keys.py` |
 | Check the test runner with the dummy set | `uv run --project agent python -m evals.runner --dummy --out <temp folder>` |
 | Run a real evaluation set | added with each test set (`evals/runner`) |

@@ -2,7 +2,8 @@
 
     python scripts/quick_checks.py
 
-Runs code style, type checks, unit tests and the secret scan. Stops with a non-zero
+Runs code style, type checks and unit tests for the agent and the web page,
+and the secret scan. Stops with a non-zero
 exit code if anything fails, and prints what failed.
 """
 
@@ -15,11 +16,20 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 AGENT = REPO_ROOT / "agent"
+WEB = REPO_ROOT / "web"
+PNPM_VERSION = "pnpm@9.15.9"  # the version the web starter pins
 
 
 def uv_command() -> list[str]:
     found = shutil.which("uv")
     return [found] if found else [sys.executable, "-m", "uv"]
+
+
+def pnpm_command() -> list[str]:
+    corepack = shutil.which("corepack")
+    if corepack:
+        return [corepack, PNPM_VERSION]
+    return [shutil.which("pnpm") or "pnpm"]
 
 
 def run(label: str, command: list[str], cwd: Path) -> bool:
@@ -37,6 +47,10 @@ def main() -> int:
         ("Type checks (mypy)", [*uv, "mypy", "main.py", "settings", "../evals/runner",
                                 "../scripts"], AGENT),
         ("Unit tests (pytest)", [*uv, "pytest", "-q"], AGENT),
+        ("Web code style (eslint)", [*pnpm_command(), "lint"], WEB),
+        ("Web formatting (prettier)", [*pnpm_command(), "format:check"], WEB),
+        ("Web type checks (tsc)", [*pnpm_command(), "typecheck"], WEB),
+        ("Web unit tests (vitest)", [*pnpm_command(), "test"], WEB),
         ("Secret scan", [sys.executable, str(REPO_ROOT / "scripts" / "secret_scan.py")], REPO_ROOT),
     ]
     results = [(label, run(label, cmd, cwd)) for label, cmd, cwd in steps]
