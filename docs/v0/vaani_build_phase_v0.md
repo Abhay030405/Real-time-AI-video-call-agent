@@ -40,8 +40,8 @@ After Phase 5: version 0.5, the Reading Engine (see its build plan, RE-1 to RE-8
 
 ### What gets built
 - Private repository with the folder layout for the agent, the web page, evaluation (`evals/datasets/`, `evals/results/`) and documents.
-- Basic checks on every change: lint, type checks, unit tests, container build, secret scan.
-- Vendor accounts: LiveKit Cloud (Mumbai agent region), Sarvam, Cartesia (Pro plan), the candidate AI model providers, OpenRouter, Jev (TypeSafe), LemonSlice. Spending limits set on each.
+- **No automatic checks** (founder decision, 19 Oct 2026). Instead, one command runs the quick checks by hand: code style, type checks, unit tests and a secret scan. The founder runs it before accepting any change.
+- Vendor accounts, following `docs/phase0/01_accounts_checklist.md`: Jev (TypeSafe), LiveKit Cloud (Mumbai agent region), Sarvam, Cartesia (Pro plan), OpenRouter. Spending limits set on each. Accounts opened later, when first needed: the direct M1 provider (Phase 1, once M1 is chosen), managed PostgreSQL and Redis in India (Phase 3), LemonSlice (Phase 4).
 - API keys kept only on the server, never in the web page.
 - **The result record:** the format every evaluation run saves (date, code version, every layer and model version, test set version, judge version, scores with spread, cost).
 - **The test runner skeleton:** runs a named test set and saves a result record. Empty test sets are fine at this stage.
@@ -50,9 +50,9 @@ After Phase 5: version 0.5, the Reading Engine (see its build plan, RE-1 to RE-8
   - The ~30 turn-taking scripts (thinking pauses of 2, 4 and 6 seconds, "hmm", "haan", coughs, real interruptions, background noise), **recorded with video** (RE-D13).
 
 ### Exit gate
-- [ ] A change to the repository runs all basic checks automatically.
+- [ ] One command runs the quick checks by hand, and it passes on the empty repository.
 - [ ] The test runner produces a valid result record from a dummy test.
-- [ ] All vendor accounts work with a test request, and spending limits are set.
+- [ ] Every Phase 0 account works with a test request, and spending limits are set.
 - [ ] Speech clips and video scripts are stored, versioned, with consent records.
 
 ---

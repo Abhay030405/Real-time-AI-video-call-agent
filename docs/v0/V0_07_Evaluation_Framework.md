@@ -51,7 +51,7 @@ Production monitoring (section 10) sits beside the pyramid once real people use 
 
 | Part | Test set | Measures | V0 target |
 |---|---|---|---|
-| **Speech-to-text (Sarvam)** | 200+ short clips recorded by the founder and 5 to 8 volunteers: pure English, pure Hindi, Hinglish mixed, with fan or traffic noise, plus Indian names and places. Each has a correct written transcript | **Word error rate** (share of words wrong), and **meaning-error rate** (share of clips where the mistake changes the meaning, checked by the AI judge) | Meaning-error rate ≤ 5% on Hinglish clips. Word error rate recorded; starting target ≤ 18%. There is no backup service, so this is a hard stop in Phase 1 |
+| **Speech-to-text (Sarvam)** | 200+ short clips recorded by the founder and 5 to 6 volunteers (about 30 to 35 clips each): pure English, pure Hindi, Hinglish mixed, with fan or traffic noise, plus Indian names and places. Each has a correct written transcript | **Word error rate** (share of words wrong), and **meaning-error rate** (share of clips where the mistake changes the meaning, checked by the AI judge) | Meaning-error rate ≤ 5% on Hinglish clips. Word error rate recorded; starting target ≤ 18%. There is no backup service, so this is a hard stop in Phase 1 |
 | **Main model (M1, M2)** | 60 conversation snippets in English and Hinglish | Time to first word (50th/95th/99th), reply quality score, cost per 1,000 replies | M1 first-word time at the 95th percentile ≤ 700 ms from Mumbai |
 | **Helper model (S1)** | 30 conversations to summarise | Summary keeps key facts (judge) | ≥ 90% facts kept |
 | **Decision model (Jev)** | 30 conversations, each tagged by the founder with the right skill, intensity, heavy-disclosure yes/no and Hinglish level | Agreement with the founder's tags; answer time from Mumbai (50th/95th/99th) | Skill choice agrees ≥ 85%; heavy-disclosure agrees ≥ 90% |
@@ -122,7 +122,7 @@ Text tests cannot measure timing. So we record about 30 spoken test scripts, usi
 
 **The scripts are recorded with video from Phase 0 (RE-D13):** the speaker's face is filmed at the same time as the audio, showing natural thinking looks, nods and "wait" gestures. Version 0 uses only the audio; version 0.5 uses the same takes with their video, so both are measured on exactly the same moments.
 
-A small test robot joins a real LiveKit room and plays these into the live pipeline, exactly like a person would. We measure:
+A small test robot joins a real LiveKit room and plays these into the live pipeline, exactly like a person would. Scripts that test sounds or interruptions while Vaani is talking have a second segment, played a fixed time after Vaani starts speaking, so the sound always lands in the middle of her answer (full scripts in `docs/phase0/04_turn_taking_scripts.md`). We measure:
 
 | Measure | Meaning |
 |---|---|
@@ -212,8 +212,8 @@ Track evaluation cost in every result record, and review it weekly.
 
 | When | What runs | Blocks the change if |
 |---|---|---|
-| **Every pull request** that touches prompts, skills, the Conductor, rules or memory | L2 working set, all of L5, code unit tests | Any hard check fails, or any soft score drops by more than 0.3 from baseline |
-| **Every pull request** (any) | Lint, type checks, unit tests, container build, secret scan | Anything fails |
+| **Before accepting any change** to prompts, skills, the Conductor, rules or memory (run by hand; there are no automatic checks) | L2 working set, all of L5, code unit tests | Any hard check fails, or any soft score drops by more than 0.3 from baseline |
+| **Before accepting any change** (run by hand) | Code style, type checks, unit tests, secret scan | Anything fails |
 | **Nightly** | L3 and L4 working sets, L1 when vendors or models changed | Not blocking; a regression opens an issue automatically |
 | **Phase gate** | Everything built so far, including the hidden sets and L6 | The phase's exit criteria in `vaani_build_phase_v0.md` are not met |
 | **Release (V0 sign-off)** | Everything plus L7 | Any line of the scorecard below fails |
