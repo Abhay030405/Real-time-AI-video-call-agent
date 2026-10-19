@@ -60,6 +60,7 @@ vaani/
 ├── evals/                        Everything that proves Vaani is good, safe and fast
 │   ├── datasets/                 Test sets by level, each split into working/ and hidden/
 │   ├── runner/                   Runs a named test set and saves a result record
+│   │   └── tests/                Unit tests for the runner
 │   ├── judge/                    The AI judge's instructions and its calibration against the founder
 │   ├── results/                  One result record per run, with every version attached
 │   └── reports/                  Comparisons against the accepted baseline; the baseline report
@@ -70,7 +71,7 @@ vaani/
 │   └── ci/                       The checks that run on every change
 │
 ├── ops/dashboard/                Call success, latency percentiles, fallbacks, cost per call
-└── scripts/                      One-off helpers (recording clips, importing test sets)
+└── scripts/                      Helpers: quick checks, key check, secret scan (and later recording and test-set helpers)
 ```
 
 ## Where each phase works
