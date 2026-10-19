@@ -73,6 +73,13 @@ class Settings:
         except ValueError as err:
             raise SettingsError(f"Setting {name} must be a number, got {raw!r}.") from err
 
+    def get_int(self, name: str) -> int:
+        raw = self.get_required(name)
+        try:
+            return int(raw)
+        except ValueError as err:
+            raise SettingsError(f"Setting {name} must be a whole number, got {raw!r}.") from err
+
     def secret_values(self) -> list[str]:
         """Secret values long enough to search for. Used only by the secret scan."""
         return [v for n, v in self.values.items() if is_secret(n) and len(v) >= 8]
