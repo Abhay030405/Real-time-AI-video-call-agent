@@ -3,8 +3,21 @@
 #
 # Start everything:           docker compose up --build
 # Only database and cache:    docker compose up postgres redis
+# Only the local call server: docker compose up livekit
 
 services:
+  livekit:
+    image: livekit/livekit-server:latest   # local call server; production uses LiveKit Cloud (Mumbai)
+    command: ["--dev", "--bind", "0.0.0.0"]
+    environment:
+      # Same key and secret as in .env, so the agent and web page can connect
+      LIVEKIT_KEYS: "${LIVEKIT_API_KEY}: ${LIVEKIT_API_SECRET}"
+    ports:
+      - "7880:7880"          # web and API
+      - "7881:7881"          # media over TCP
+      - "7882:7882/udp"      # media over UDP
+    restart: unless-stopped
+
   postgres:
     image: pgvector/pgvector:pg16          # PostgreSQL with the pgvector add-on
     environment:
@@ -38,7 +51,10 @@ services:
       # Point the agent at the local database and cache, overriding .env
       DATABASE_URL: postgresql://vaani:vaani_local_only@postgres:5432/vaani
       REDIS_URL: redis://redis:6379/0
+      LIVEKIT_URL: ws://livekit:7880
     depends_on:
+      livekit:
+        condition: service_started
       postgres:
         condition: service_healthy
       redis:

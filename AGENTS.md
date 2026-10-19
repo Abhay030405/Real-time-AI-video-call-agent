@@ -214,6 +214,7 @@ Filled in as each phase creates them.
 |---|---|
 | Start everything locally | `docker compose up --build` |
 | Start only the database and cache | `docker compose up postgres redis` |
+| Start only the local call server (LiveKit) | `docker compose up livekit` |
 | Quick checks (style, types, unit tests, secret scan) | `python scripts/quick_checks.py` |
 | Check every key in `.env` works (needs the local LiveKit server running) | `python scripts/check_keys.py` |
 | Check the test runner with the dummy set | `uv run --project agent python -m evals.runner --dummy --out <temp folder>` |
