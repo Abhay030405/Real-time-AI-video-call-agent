@@ -71,6 +71,11 @@ async def main() -> int:
     listener = Listener()
     tasks: list[asyncio.Task[None]] = []
 
+    @room.on("data_received")
+    def on_data(packet: rtc.DataPacket) -> None:
+        if packet.topic == "vaani.session_end":
+            print(f"NOTE    the agent ended the call: {bytes(packet.data).decode()}")
+
     @room.on("track_subscribed")
     def on_track(track: rtc.Track, *_: Any) -> None:
         if track.kind == rtc.TrackKind.KIND_AUDIO:
