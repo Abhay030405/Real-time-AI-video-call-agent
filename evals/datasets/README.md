@@ -18,7 +18,7 @@ Each set has a `working/` folder (about 70%, used while building) and a `hidden/
 
 ## Storage
 
-Audio and video files live in the private Oracle Cloud Object Storage bucket in Mumbai (`STORAGE_BUCKET_TEST_MATERIAL` in the root `.env`), never in the repository. A second copy is kept on the founder's own drive. Storage rules are in the root `README.md`. Each set's folder here holds a file list (name, version, checksum, transcript or label) and its consent records. The test runner downloads the files it needs before a run.
+Audio and video files live on local drives outside the repository: the main copy in `TEST_MATERIAL_DIR` and a second copy on an external drive (`TEST_MATERIAL_BACKUP_DIR`), both set in the root `.env`. Storage rules are in the root `README.md`. Each set's folder here holds a file list (name, version, checksum, transcript or label) and its consent records. The test runner reads the files from `TEST_MATERIAL_DIR` and checks each one against its checksum.
 
 ## Rules
 

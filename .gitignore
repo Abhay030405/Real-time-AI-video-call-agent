@@ -6,7 +6,7 @@ web/.env
 web/.env.*
 !web/.env.example
 
-# Recorded test material lives in the private R2 bucket, not in the repository.
+# Recorded test material lives in a folder outside the repository (TEST_MATERIAL_DIR).
 # Only the file lists and consent records are committed.
 evals/datasets/**/*.wav
 evals/datasets/**/*.mp3
@@ -33,3 +33,6 @@ web/out/
 .DS_Store
 .idea/
 .vscode/
+
+# Local recordings (see TEST_MATERIAL_DIR in .env). Never committed.
+storage/
