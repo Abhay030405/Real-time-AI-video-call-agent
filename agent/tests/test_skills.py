@@ -122,3 +122,10 @@ def test_a_call_starts_in_casual_chat_and_the_skill_can_change() -> None:
     texts = [m.text_content or "" for m in assemble(ctx, agent.turn).messages()]
     assert texts[0] == load_instructions()  # the fixed block did not change
     assert "Skill: support" in texts[1]
+
+
+def test_the_skill_tests_are_found_through_the_root_setting() -> None:
+    """In the Docker image the code lives in /app, so the test files are looked up from there."""
+    from settings import REPO_ROOT
+
+    assert DATASETS == REPO_ROOT / "evals" / "datasets" / "l2_single_replies"

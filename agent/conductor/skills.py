@@ -11,8 +11,11 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
+from settings import REPO_ROOT
+
 PROMPTS_SKILLS = Path(__file__).resolve().parents[1] / "prompts" / "skills"
-DATASETS = Path(__file__).resolve().parents[2] / "evals" / "datasets" / "l2_single_replies"
+# The L2 test files also ship in the agent image, so the "tests exist" rule can be checked there
+DATASETS = REPO_ROOT / "evals" / "datasets" / "l2_single_replies"
 
 SKILLS = ("casual_chat", "curious_deep_dive", "serious_discussion", "support", "playful_banter")
 DEFAULT_SKILL = "casual_chat"  # every call starts in light conversation

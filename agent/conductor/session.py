@@ -87,7 +87,10 @@ class CallRunner:
         self._turns_logged = 0
         self._decider: BackgroundDecider | None = None
         self._jev_model = None
-        if settings.get("JEV_ENABLED") == "true":
+        skills_ready = ready_skills(settings.get_int("SKILL_MIN_TEST_CASES"))
+        if settings.get("JEV_ENABLED") == "true" and not skills_ready:
+            logger.error("No skill is complete (spec, instructions and tests), so Jev is not used")
+        if settings.get("JEV_ENABLED") == "true" and skills_ready:
             self._jev_model = build_decision_model(settings)
             self._decider = BackgroundDecider(
                 self._jev_model,
@@ -98,7 +101,7 @@ class CallRunner:
                     heavy_threshold=settings.get_float("JEV_HEAVY_THRESHOLD"),
                     crisis_threshold=settings.get_float("JEV_CRISIS_THRESHOLD"),
                 ),
-                ready_skills(settings.get_int("SKILL_MIN_TEST_CASES")),
+                skills_ready,
                 on_event=self._jev_event,
             )
         self._clips = ClipLibrary()
