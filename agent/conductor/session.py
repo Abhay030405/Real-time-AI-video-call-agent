@@ -91,7 +91,12 @@ class CallRunner:
         )
         self._filler = FillerTimer(settings.get_float("FILLER_AFTER_S"), self._play_filler)
         self._ending = False
-        self.agent = VaaniAgent(load_instructions(), filler=self._filler, recorder=self._recorder)
+        self.agent = VaaniAgent(
+            load_instructions(),
+            filler=self._filler,
+            recorder=self._recorder,
+            session_minutes=settings.get_int("SESSION_MINUTES"),
+        )
 
     def brain_event(self, what: str) -> None:
         """Called by the brain when M1 fails and M2 takes over."""

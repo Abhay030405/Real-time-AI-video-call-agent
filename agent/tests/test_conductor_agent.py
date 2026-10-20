@@ -59,14 +59,14 @@ async def test_the_rules_check_runs_after_each_spoken_turn(
     message = llm.ChatMessage(role="user", content=["I had a bad day"])
     await agent.on_user_turn_completed(turn_ctx, message)
     assert seen_text == ["I had a bad day"]
-    assert [m.text_content for m in turn_ctx.messages()] == ["Be extra gentle."]
+    assert agent.turn.overrides == ("Be extra gentle.",)  # carried into layer 3 of the reply
 
 
 async def test_no_override_means_nothing_is_added() -> None:
     agent = VaaniAgent(load_instructions())
     turn_ctx = llm.ChatContext()
     await agent.on_user_turn_completed(turn_ctx, llm.ChatMessage(role="user", content=["hi"]))
-    assert turn_ctx.messages() == []
+    assert agent.turn.overrides == ()
 
 
 async def test_a_late_first_word_plays_one_filler() -> None:

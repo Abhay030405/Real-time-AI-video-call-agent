@@ -2,23 +2,20 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterable
-from pathlib import Path
+import time
+from collections.abc import AsyncIterable, Callable
 
 from livekit.agents import Agent, ModelSettings, llm
 
 import rules_check
+from conductor.layers import TurnContext, assemble, fixed_instructions, session_note
 from reliability.filler import FillerTimer
 from telemetry import TurnRecorder
-
-INSTRUCTIONS_FILE = (
-    Path(__file__).resolve().parents[1] / "prompts" / "layer0_identity" / "phase1_placeholder.md"
-)
 
 
 def load_instructions() -> str:
     """The fixed instructions. Layers 0 and 1 never change during a session (rule 3)."""
-    return INSTRUCTIONS_FILE.read_text(encoding="utf-8").strip()
+    return fixed_instructions()
 
 
 def has_words(chunk: llm.ChatChunk | str | object) -> bool:
@@ -36,18 +33,31 @@ class VaaniAgent(Agent):
         instructions: str,
         filler: FillerTimer | None = None,
         recorder: TurnRecorder | None = None,
+        session_minutes: int = 20,
+        clock: Callable[[], float] = time.monotonic,
     ) -> None:
         super().__init__(instructions=instructions)
         self._filler = filler
         self._recorder = recorder
+        self._session_minutes = session_minutes
+        self._clock = clock
+        self._started = clock()
+        self._user_turns = 0
+        self.turn = TurnContext()  # the changing layers, set before each reply
+        self._refresh_session_note()
+
+    def _refresh_session_note(self) -> None:
+        minutes = int((self._clock() - self._started) // 60)
+        self.turn.session_note = session_note(minutes, self._session_minutes, self._user_turns)
 
     async def on_user_turn_completed(
         self, turn_ctx: llm.ChatContext, new_message: llm.ChatMessage
     ) -> None:
         """Step 4 of a turn: the rules check (plain code) adds any override for this reply."""
         result = rules_check.check(new_message.text_content or "")
-        for override in result.overrides:
-            turn_ctx.add_message(role="system", content=override)
+        self._user_turns += 1
+        self.turn.overrides = result.overrides
+        self._refresh_session_note()
 
     async def llm_node(
         self,
@@ -56,6 +66,7 @@ class VaaniAgent(Agent):
         model_settings: ModelSettings,
     ) -> AsyncIterable[llm.ChatChunk | str]:
         """Ask the brain. If the first word is late, one filler plays (V0_04 section 9)."""
+        chat_ctx = assemble(chat_ctx, self.turn)  # layers 2 and 3 and the session note
         if self._recorder is not None:
             self._recorder.llm_requested()
         if self._filler is not None:
