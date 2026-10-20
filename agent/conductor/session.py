@@ -6,7 +6,7 @@ import asyncio
 import json
 import logging
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
 
@@ -34,6 +34,13 @@ logger = logging.getLogger("vaani.conductor")
 
 END_TOPIC = "vaani.session_end"
 TURN_MODES = ("multilingual", "vad", "stt", "manual")
+
+
+def accepted_consent(attributes: Mapping[str, str], settings: Settings) -> str | None:
+    """The consent wording the person agreed to, if the agent accepts it. None means no call."""
+    accepted = {v.strip() for v in settings.get_required("ACCEPTED_CONSENT_VERSIONS").split(",")}
+    version = attributes.get("consent_version", "")
+    return version if version in accepted else None
 
 
 def turn_handling(settings: Settings) -> TurnHandlingOptions:
@@ -129,6 +136,16 @@ class CallRunner:
     async def warm_up_jev(self) -> None:
         if self._jev_model is not None:
             await self._jev_model.warm_up()
+
+    def record_consent(self, version: str) -> None:
+        """Save which consent wording this call was made under (a label, never words)."""
+        self._writer.write("session_start", consent_version=version)
+
+    async def refuse_without_consent(self) -> None:
+        """No agreement to an accepted wording, no call: tell the page and leave the room."""
+        self._writer.write("session_refused", reason="no_consent")
+        await self._notify_end("no_consent", 0)
+        await self._room.disconnect()
 
     def brain_event(self, what: str) -> None:
         """Called by the brain when M1 fails and M2 takes over."""

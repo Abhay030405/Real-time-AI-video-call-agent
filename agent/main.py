@@ -16,7 +16,7 @@ from typing import Any
 from livekit.agents import AgentSession, JobContext, JobProcess, WorkerOptions, cli
 from livekit.plugins import silero
 
-from conductor.session import CallRunner, build_session
+from conductor.session import CallRunner, accepted_consent, build_session
 from settings import load_settings
 from vendors.brain import BrainFallback
 
@@ -31,6 +31,7 @@ def prewarm(proc: JobProcess) -> None:
 async def entrypoint(ctx: JobContext) -> None:
     settings = load_settings()
     await ctx.connect()
+    participant = await ctx.wait_for_participant()
     brain_events: list[Callable[[str], None]] = []
     session = build_session(
         settings,
@@ -39,6 +40,11 @@ async def entrypoint(ctx: JobContext) -> None:
     )
     runner = CallRunner(settings, session, ctx.room)
     brain_events.append(runner.brain_event)
+    consent = accepted_consent(participant.attributes, settings)
+    if consent is None:  # the page and token route enforce consent; the agent checks again
+        await runner.refuse_without_consent()
+        return
+    runner.record_consent(consent)
     poller = runner.connect_events()
     ctx.add_shutdown_callback(lambda: _stop(poller))
     warm_up = asyncio.create_task(_warm_up_brain(session))
