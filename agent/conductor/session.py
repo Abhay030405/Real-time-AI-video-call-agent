@@ -20,6 +20,7 @@ from conductor.clips import ClipLibrary, frames_from_wav
 from conductor.guard import SttGuard
 from reliability.filler import FillerTimer
 from reliability.stt_failure_rule import SttAction, SttFailureRule
+from rules_check import RulesConfig
 from settings import REPO_ROOT, Settings
 from telemetry import CostMeter, Prices, TelemetryWriter, TurnRecorder
 from vendors.brain import build_brain
@@ -96,6 +97,14 @@ class CallRunner:
             filler=self._filler,
             recorder=self._recorder,
             session_minutes=settings.get_int("SESSION_MINUTES"),
+            rules_config=RulesConfig(
+                opening_minutes=settings.get_float("RULES_OPENING_MINUTES"),
+                wrap_up_minute=settings.get_float("RULES_WRAP_UP_MINUTE"),
+                crisis_turns=settings.get_int("RULES_CRISIS_TURNS"),
+                jev_under_18_threshold=settings.get_float("RULES_JEV_UNDER_18_THRESHOLD"),
+            ),
+            flag_sink=self._flag,
+            end_call=self.end_call,
         )
 
     def brain_event(self, what: str) -> None:
@@ -108,6 +117,7 @@ class CallRunner:
         self._session.on("user_state_changed", self._on_user_state)
         self._session.on("user_input_transcribed", self._on_transcript)
         self._session.on("error", self._on_error)
+        self._session.on("conversation_item_added", self._on_item)
         self._session.on("agent_state_changed", self._on_agent_state)
         self._session.on("metrics_collected", self._on_metrics)
         self._session.on("close", self._on_close)
@@ -210,13 +220,28 @@ class CallRunner:
         elif fallback_text:
             self._session.say(fallback_text, add_to_chat_ctx=False)
 
-    async def end_call(self, reason: str) -> None:
-        """Apology, clean end, and a note to the web page so it can offer to start again."""
+    def _flag(self, flag: str) -> None:
+        """A crisis, heavy-moment or under-18 flag, saved for the founder's review (no words)."""
+        self._recorder.note(f"flag:{flag}")
+        try:
+            self._writer.write("flag", flag=flag, turn=self._turns_logged + 1)
+        except Exception:
+            logger.exception("could not save a flag")
+
+    def _on_item(self, event: Any) -> None:
+        item = event.item
+        if getattr(item, "role", None) == "assistant":
+            self.agent.rules_state.note_reply(getattr(item, "text_content", "") or "")
+
+    async def end_call(self, reason: str, spoken_text: str | None = None) -> None:
+        """A kind or apologetic ending, then a clean close and a note to the web page."""
         if self._ending:
             return
         self._ending = True
-        clip = self._clips.apology()
-        if clip is not None:
+        clip = self._clips.apology() if spoken_text is None else None
+        if spoken_text is not None:
+            await self._session.say(spoken_text, add_to_chat_ctx=False).wait_for_playout()
+        elif clip is not None:
             handle = self._session.say(
                 clip.stem, audio=frames_from_wav(clip), add_to_chat_ctx=False
             )
@@ -226,7 +251,8 @@ class CallRunner:
         await self._session.aclose()
 
     async def _notify_end(self, reason: str, rejoin_minutes: int) -> None:
-        note = {"reason": reason, "rejoin_until": int(time.time()) + rejoin_minutes * 60}
+        offer = 0 if reason == "under_18" else rejoin_minutes * 60  # no way back for the age rule
+        note = {"reason": reason, "rejoin_until": int(time.time()) + offer}
         try:
             await self._room.local_participant.publish_data(
                 json.dumps(note), topic=END_TOPIC, reliable=True

@@ -26,4 +26,10 @@ describe('end notice', () => {
     expect(endNoticeText({ reason: 'stt_failure', rejoin_until: 1000 }, 990)).toBeNull();
     expect(endNoticeText({ reason: 'stt_failure', rejoin_until: 1000 }, 2000)).toBeNull();
   });
+
+  it('says plainly that the space is for adults, with no offer to come back', () => {
+    const text = endNoticeText({ reason: 'under_18', rejoin_until: 0 }, 5000);
+    expect(text).toContain('for adults');
+    expect(text).not.toContain('start again');
+  });
 });

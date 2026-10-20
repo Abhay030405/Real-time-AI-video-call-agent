@@ -222,6 +222,7 @@ Filled in as each phase creates them.
 | Scripted call with no human (needs `docker compose up -d livekit agent web`) | `uv run --project agent python scripts/smoke_call.py` |
 | Remake the filler and apology clips in Vaani's voice | `uv run --project agent python scripts/make_clips.py` |
 | Speed (50th/95th/99th) and cost per call from the logs in `storage/telemetry` | `uv run --project agent python scripts/timing_report.py` |
+| Calls flagged for the founder's review (crisis, under 18) | `uv run --project agent python scripts/flagged_sessions.py` |
 | Check the test runner with the dummy set | `uv run --project agent python -m evals.runner --dummy --out <temp folder>` |
 | Run an evaluation set (writes a record in `evals/results/`) | `uv run --project agent python -m evals.runner l1_models --split working` (also `l1_voice`, and `--split hidden` at phase gates) |
 | Break one part live (M1, Cartesia, Sarvam hearing) and check the failure behaviour | `uv run --project agent python scripts/fault_checks.py` |
