@@ -21,16 +21,18 @@ from conductor.layers import fingerprints  # noqa: E402
 from conductor.skills import SKILLS  # noqa: E402
 from settings import REPO_ROOT, Settings, load_settings  # noqa: E402
 from vendors.brain import describe_brain  # noqa: E402
+from vendors.decision_model import describe_decision_model  # noqa: E402
 from vendors.speech_to_text import describe_speech_to_text  # noqa: E402
 from vendors.voice import describe_voice  # noqa: E402
 
 from .dummy import dummy_test_set  # noqa: E402
+from .l1_decision_model import l1_decision_model_test_set  # noqa: E402
 from .l1_models import l1_models_test_set  # noqa: E402
 from .l1_voice import l1_voice_test_set  # noqa: E402
 from .l2_replies import l2_replies_test_set  # noqa: E402
 from .runner import RunInfo, TestSet, run_test_set  # noqa: E402
 
-SETS = ("l1_models", "l1_voice", "l2_replies")
+SETS = ("l1_models", "l1_voice", "l2_replies", "l1_decision_model")
 
 
 def build_info(settings: Settings, purpose: str) -> RunInfo:
@@ -44,6 +46,7 @@ def build_info(settings: Settings, purpose: str) -> RunInfo:
             "speech_to_text": describe_speech_to_text(settings),
             **describe_voice(settings),
             **describe_brain(settings),
+            "decision_model": describe_decision_model(settings),
         },
         cost={"exchange_rate": f"{settings.get('USD_INR')} on {settings.get('USD_INR_DATE')}"},
     )
@@ -68,6 +71,8 @@ def main(argv: list[str] | None = None) -> int:
         test_set = dummy_test_set()
     elif args.test_set == "l1_models":
         test_set = l1_models_test_set(settings, args.split)
+    elif args.test_set == "l1_decision_model":
+        test_set = l1_decision_model_test_set(settings, args.split)
     elif args.test_set == "l2_replies":
         chosen = (args.skill,) if args.skill else SKILLS
         test_set = l2_replies_test_set(settings, args.split, chosen, args.repeats)

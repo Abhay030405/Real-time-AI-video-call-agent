@@ -87,6 +87,14 @@ class VaaniAgent(Agent):
         self.skill, self.intensity = skill, intensity
         self.turn.skill_note = skill_note(load_skill(skill), intensity)
 
+    def set_language_note(self, note: str) -> None:
+        """Layer 2: how much Hindi the person uses, so she can mirror it."""
+        self.turn.session_context = note
+
+    @property
+    def user_turns(self) -> int:
+        return self._user_turns
+
     def minutes_elapsed(self) -> float:
         return (self._clock() - self._started) / 60
 

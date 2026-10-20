@@ -110,6 +110,14 @@ def check_sarvam_dead(out: str, records: list[dict[str, Any]]) -> list[str]:
     return ["OK the agent apologised and ended the call (reason stt_failure)"]
 
 
+def check_jev_dead(out: str, records: list[dict[str, Any]]) -> list[str]:
+    if not user_turns(records):
+        return ["the call did not answer a spoken turn while Jev was down"]
+    if not any(r["type"] == "jev_failed" for r in records):
+        return ["no Jev failure was recorded (was Jev even called?)"]
+    return ["OK Jev failed, the call kept going with the current skill"]
+
+
 FAULTS: list[tuple[str, dict[str, str], Callable[[str, list[dict[str, Any]]], list[str]]]] = [
     (
         "M1 killed (dead address)",
@@ -117,6 +125,7 @@ FAULTS: list[tuple[str, dict[str, str], Callable[[str, list[dict[str, Any]]], li
         check_m1_dead,
     ),
     ("Cartesia killed (wrong key)", {"CARTESIA_API_KEY": "sk_car_wrong"}, check_cartesia_dead),
+    ("Jev killed (wrong key)", {"TYPESAFE_API_KEY": "wrong"}, check_jev_dead),
     (
         "Sarvam hearing killed (dead address)",
         {"SARVAM_STT_URL": "ws://host.docker.internal:9"},

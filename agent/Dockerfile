@@ -30,6 +30,8 @@ RUN uv sync --frozen --no-dev --no-install-project
 # Our code, Vaani's prompts and her pre-recorded clips
 COPY agent/ ./
 COPY assets/audio/ ./assets/audio/
+# The skill tests ship too: a skill is offered to Jev only if its tests exist (hard rule 6)
+COPY evals/datasets/l2_single_replies/ ./evals/datasets/l2_single_replies/
 # Setting names and defaults only (no secrets): the settings reader checks names against it
 COPY .env.example ./.env.example
 RUN uv sync --frozen --no-dev
