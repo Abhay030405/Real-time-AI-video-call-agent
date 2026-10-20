@@ -18,6 +18,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "agent"))
 
 from conductor.layers import fingerprints  # noqa: E402
+from conductor.skills import SKILLS  # noqa: E402
 from settings import REPO_ROOT, Settings, load_settings  # noqa: E402
 from vendors.brain import describe_brain  # noqa: E402
 from vendors.speech_to_text import describe_speech_to_text  # noqa: E402
@@ -26,9 +27,10 @@ from vendors.voice import describe_voice  # noqa: E402
 from .dummy import dummy_test_set  # noqa: E402
 from .l1_models import l1_models_test_set  # noqa: E402
 from .l1_voice import l1_voice_test_set  # noqa: E402
+from .l2_replies import l2_replies_test_set  # noqa: E402
 from .runner import RunInfo, TestSet, run_test_set  # noqa: E402
 
-SETS = ("l1_models", "l1_voice")
+SETS = ("l1_models", "l1_voice", "l2_replies")
 
 
 def build_info(settings: Settings, purpose: str) -> RunInfo:
@@ -53,6 +55,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--dummy", action="store_true", help="run the built-in dummy test set")
     parser.add_argument("--split", choices=("working", "hidden"), default="working")
     parser.add_argument("--purpose", default="")
+    parser.add_argument("--skill", choices=SKILLS, help="only this skill (l2_replies)")
+    parser.add_argument("--repeats", type=int, default=1, help="runs of every case (l2_replies)")
     parser.add_argument("--out", type=Path, default=REPO_ROOT / "evals" / "results")
     args = parser.parse_args(argv)
     if not args.dummy and not args.test_set:
@@ -64,6 +68,9 @@ def main(argv: list[str] | None = None) -> int:
         test_set = dummy_test_set()
     elif args.test_set == "l1_models":
         test_set = l1_models_test_set(settings, args.split)
+    elif args.test_set == "l2_replies":
+        chosen = (args.skill,) if args.skill else SKILLS
+        test_set = l2_replies_test_set(settings, args.split, chosen, args.repeats)
     else:
         test_set = l1_voice_test_set(settings, args.split)
     purpose = args.purpose or f"{test_set.name} {args.split} run"

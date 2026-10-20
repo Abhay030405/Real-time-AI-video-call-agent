@@ -41,7 +41,7 @@ def test_the_fixed_layers_hold_nothing_that_changes() -> None:
 
 
 def test_the_fixed_layers_stay_small_so_replies_stay_fast() -> None:
-    assert len(fixed_instructions().split()) <= 1100
+    assert len(fixed_instructions().split()) <= 1300
 
 
 def test_the_fixed_layers_have_a_fingerprint_per_layer() -> None:

@@ -12,6 +12,7 @@ from livekit.agents import Agent, ModelSettings, StopResponse, llm
 
 import rules_check
 from conductor.layers import TurnContext, assemble, fixed_instructions, session_note
+from conductor.skills import DEFAULT_SKILL, load_skill, skill_note
 from reliability.filler import FillerTimer
 from rules_check import (
     AGE_ENDING_LINE,
@@ -76,7 +77,15 @@ class VaaniAgent(Agent):
         self._end_call = end_call
         self._crisis_reply = False
         self.turn = TurnContext()  # the changing layers, set before each reply
+        self.skill = DEFAULT_SKILL  # every call starts in light conversation
+        self.intensity = "medium"
+        self.set_skill(DEFAULT_SKILL, "medium")
         self._refresh_session_note()
+
+    def set_skill(self, skill: str, intensity: str = "medium") -> None:
+        """Change the skill note (layer 3) for the next reply. Layers 0 and 1 do not change."""
+        self.skill, self.intensity = skill, intensity
+        self.turn.skill_note = skill_note(load_skill(skill), intensity)
 
     def minutes_elapsed(self) -> float:
         return (self._clock() - self._started) / 60
