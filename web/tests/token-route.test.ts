@@ -20,8 +20,10 @@ function setEnv(overrides: Record<string, string | undefined> = {}) {
   }
 }
 
-const request = () =>
-  new Request('http://localhost/api/token', { method: 'POST', body: JSON.stringify({}) });
+const AGREED = { consent: { version: 'consent_v1', adult: true } };
+
+const request = (body: unknown = AGREED) =>
+  new Request('http://localhost/api/token', { method: 'POST', body: JSON.stringify(body) });
 
 describe('POST /api/token', () => {
   const saved = { ...process.env };
@@ -54,6 +56,23 @@ describe('POST /api/token', () => {
   it('refuses outside development', async () => {
     setEnv({ APP_ENV: 'production' });
     expect((await POST(request())).status).toBe(403);
+  });
+
+  it('refuses a call with no agreement, an old wording, or the adult box not ticked', async () => {
+    for (const body of [
+      {},
+      { consent: { version: 'consent_v0', adult: true } },
+      { consent: { version: 'consent_v1', adult: false } },
+      { consent: 'yes' },
+    ]) {
+      expect((await POST(request(body))).status).toBe(403);
+    }
+  });
+
+  it('records which wording the person agreed to in the pass', async () => {
+    const body = await (await POST(request())).json();
+    const claims = await new TokenVerifier(KEY, SECRET).verify(body.participantToken);
+    expect(claims.attributes?.consent_version).toBe('consent_v1');
   });
 
   it('names a missing setting', async () => {

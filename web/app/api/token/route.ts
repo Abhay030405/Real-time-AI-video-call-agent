@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { AccessToken, RoomConfiguration, TrackSource } from 'livekit-server-sdk';
 import { randomUUID } from 'node:crypto';
+import { CONSENT_VERSION, isValidConsent } from '@/lib/consent';
 import { SettingsError, loadSettings } from '@/lib/settings';
 
 // Makes the short-lived access pass for one call. It runs only on our server, so the
@@ -27,6 +28,13 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json().catch(() => ({}));
+  // No call without the person's agreement to the current consent wording (adults only)
+  if (!isValidConsent(body?.consent)) {
+    return new NextResponse('Please read and agree to the consent screen first.', {
+      status: 403,
+      headers: NO_STORE,
+    });
+  }
   const roomConfig = body?.room_config
     ? RoomConfiguration.fromJson(body.room_config, { ignoreUnknownFields: true })
     : new RoomConfiguration();
@@ -40,6 +48,8 @@ export async function POST(req: Request) {
     identity: participantIdentity,
     name: participantName,
     ttl: `${settings.tokenTtlSeconds}s`,
+    // The agent records which wording this person agreed to, and refuses a call without it
+    attributes: { consent_version: CONSENT_VERSION },
   });
   token.addGrant({
     room: roomName,

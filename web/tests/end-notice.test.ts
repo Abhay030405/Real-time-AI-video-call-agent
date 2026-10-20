@@ -27,6 +27,10 @@ describe('end notice', () => {
     expect(endNoticeText({ reason: 'stt_failure', rejoin_until: 1000 }, 2000)).toBeNull();
   });
 
+  it('asks the person to agree first when there was no consent', () => {
+    expect(endNoticeText({ reason: 'no_consent', rejoin_until: 0 }, 5000)).toContain('consent');
+  });
+
   it('says plainly that the space is for adults, with no offer to come back', () => {
     const text = endNoticeText({ reason: 'under_18', rejoin_until: 0 }, 5000);
     expect(text).toContain('for adults');

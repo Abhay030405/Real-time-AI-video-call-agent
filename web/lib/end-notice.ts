@@ -23,6 +23,7 @@ export function parseEndNote(payload: Uint8Array): EndNote | null {
 
 /** Plain words for the person. Returns null once the offer has run out. */
 export function endNoticeText(note: EndNote, nowSeconds: number): string | null {
+  if (note.reason === 'no_consent') return 'Please read and agree to the consent screen first.';
   if (note.reason === 'under_18') return 'This space is for adults, so the call ended. Take care.';
   const minutes = Math.floor((note.rejoin_until - nowSeconds) / 60);
   if (minutes < 1) return null;
