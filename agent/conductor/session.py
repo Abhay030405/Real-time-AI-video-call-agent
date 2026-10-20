@@ -15,15 +15,18 @@ from livekit.agents import AgentSession, metrics, vad
 from livekit.agents.voice.turn import TurnHandlingOptions
 from livekit.plugins.turn_detector.multilingual import MultilingualModel
 
+from background_decisions import BackgroundDecider, DecisionConfig
 from conductor.agent import VaaniAgent, load_instructions
 from conductor.clips import ClipLibrary, frames_from_wav
 from conductor.guard import SttGuard
+from conductor.skills import ready_skills
 from reliability.filler import FillerTimer
 from reliability.stt_failure_rule import SttAction, SttFailureRule
 from rules_check import RulesConfig
 from settings import REPO_ROOT, Settings
 from telemetry import CostMeter, Prices, TelemetryWriter, TurnRecorder
 from vendors.brain import build_brain
+from vendors.decision_model import build_decision_model
 from vendors.speech_to_text import build_speech_to_text
 from vendors.voice import build_voice
 
@@ -82,6 +85,22 @@ class CallRunner:
             folder if folder.is_absolute() else REPO_ROOT / folder, room.name or "session"
         )
         self._turns_logged = 0
+        self._decider: BackgroundDecider | None = None
+        self._jev_model = None
+        if settings.get("JEV_ENABLED") == "true":
+            self._jev_model = build_decision_model(settings)
+            self._decider = BackgroundDecider(
+                self._jev_model,
+                DecisionConfig(
+                    enabled=True,
+                    window_turns=settings.get_int("JEV_WINDOW_TURNS"),
+                    skill_switch_threshold=settings.get_float("SKILL_SWITCH_THRESHOLD"),
+                    heavy_threshold=settings.get_float("JEV_HEAVY_THRESHOLD"),
+                    crisis_threshold=settings.get_float("JEV_CRISIS_THRESHOLD"),
+                ),
+                ready_skills(settings.get_int("SKILL_MIN_TEST_CASES")),
+                on_event=self._jev_event,
+            )
         self._clips = ClipLibrary()
         self._guard = SttGuard(
             SttFailureRule(
@@ -107,6 +126,10 @@ class CallRunner:
             end_call=self.end_call,
         )
 
+    async def warm_up_jev(self) -> None:
+        if self._jev_model is not None:
+            await self._jev_model.warm_up()
+
     def brain_event(self, what: str) -> None:
         """Called by the brain when M1 fails and M2 takes over."""
         self._recorder.note(what)
@@ -130,10 +153,27 @@ class CallRunner:
 
     # ---- telemetry ----
 
+    def _jev_event(self, kind: str, fields: dict[str, Any]) -> None:
+        """Jev's answers and delays are saved as numbers and labels (never words)."""
+        try:
+            self._writer.write(kind, **fields)
+        except Exception:
+            logger.exception("could not save a Jev record")
+
+    def _history(self) -> list[tuple[str, str]]:
+        return [
+            ("user" if m.role == "user" else "assistant", m.text_content or "")
+            for m in self._session.history.messages()
+            if m.role in ("user", "assistant") and (m.text_content or "").strip()
+        ]
+
     def _on_agent_state(self, event: Any) -> None:
         old, new = str(event.old_state), str(event.new_state)
         if new == "speaking":
             self._recorder.first_audio()
+            if self._decider is not None and old != "speaking":
+                # The reply has started: now, in the background, Jev reads the last few turns
+                self._decider.schedule(self.agent.user_turns, self._history(), self.agent)
         elif old == "speaking":
             self._log_turn()
 
@@ -175,6 +215,8 @@ class CallRunner:
             self._recorder.add_livekit_ms("transcription_delay", m.transcription_delay * 1000)
 
     def _on_close(self, event: Any) -> None:
+        if self._jev_model is not None:
+            asyncio.create_task(self._jev_model.aclose())
         try:
             _, cost = self._meter.take()
             self._writer.write(

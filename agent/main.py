@@ -42,8 +42,9 @@ async def entrypoint(ctx: JobContext) -> None:
     poller = runner.connect_events()
     ctx.add_shutdown_callback(lambda: _stop(poller))
     warm_up = asyncio.create_task(_warm_up_brain(session))
+    warm_up_jev = asyncio.create_task(runner.warm_up_jev())
     await session.start(agent=runner.agent, room=ctx.room)
-    await warm_up
+    await asyncio.gather(warm_up, warm_up_jev)
     # The first words of the call: Vaani greets the person (one brain call, like any turn)
     session.generate_reply(instructions="Greet the person warmly in one short sentence.")
 
