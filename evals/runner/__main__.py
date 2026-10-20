@@ -11,14 +11,13 @@ Until the LiveKit Cloud deploy, every record says it was a local run, not a Mumb
 from __future__ import annotations
 
 import argparse
-import hashlib
 import platform
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "agent"))
 
-from conductor.agent import INSTRUCTIONS_FILE  # noqa: E402
+from conductor.layers import fingerprints  # noqa: E402
 from settings import REPO_ROOT, Settings, load_settings  # noqa: E402
 from vendors.brain import describe_brain  # noqa: E402
 from vendors.speech_to_text import describe_speech_to_text  # noqa: E402
@@ -33,13 +32,12 @@ SETS = ("l1_models", "l1_voice")
 
 
 def build_info(settings: Settings, purpose: str) -> RunInfo:
-    instructions = hashlib.sha256(INSTRUCTIONS_FILE.read_bytes()).hexdigest()[:16]
     return RunInfo(
         machine=f"founder laptop ({platform.system()}), local run, not Mumbai",
         triggered_by="founder, by hand",
         purpose=purpose,
         settings={"values": settings.public(), "fingerprint": settings.fingerprint()},
-        prompts={"layer0_placeholder": "sha256:" + instructions},
+        prompts=fingerprints(),
         vendors={
             "speech_to_text": describe_speech_to_text(settings),
             **describe_voice(settings),
