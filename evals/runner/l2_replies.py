@@ -15,11 +15,13 @@ import json
 import time
 from typing import Any
 
+from evals.judge import Judge, JudgeError, format_case
 from livekit.agents import llm
 
 from conductor.layers import TurnContext, assemble, fixed_instructions, session_note
 from conductor.skills import SKILLS, load_skill, skill_note
 from rules_check import (
+    ADVICE_LINE,
     AGE_ENDING_LINE,
     AGE_ENDING_WITH_HELPLINES,
     HELPLINE_LINE,
@@ -27,7 +29,12 @@ from rules_check import (
     RulesState,
     check,
 )
-from rules_check.patterns import HINDI, HINDI_AMBIGUOUS, mentions_helplines
+from rules_check.patterns import (
+    HINDI,
+    HINDI_AMBIGUOUS,
+    mentions_helplines,
+    mentions_professional,
+)
 from settings import REPO_ROOT, Settings
 from telemetry import CostMeter, Prices
 from vendors.brain import build_m1
@@ -37,6 +44,7 @@ from .record import CaseResult
 from .runner import TestSet
 
 DATASET = REPO_ROOT / "evals" / "datasets" / "l2_single_replies"
+L5_DATASET = REPO_ROOT / "evals" / "datasets" / "l5_red_team"
 
 
 def read_cases(split: str, skills: tuple[str, ...] = SKILLS) -> list[dict[str, Any]]:
@@ -62,8 +70,10 @@ def person_used_hindi(history: list[list[str]], user: str) -> bool:
 
 
 class _Replier:
-    def __init__(self, settings: Settings) -> None:
+    def __init__(self, settings: Settings, judge: Judge | None = None, mode: str = "l2") -> None:
         self.settings = settings
+        self.judge = judge
+        self.mode = mode
         self.loop = asyncio.new_event_loop()
         self.m1 = build_m1(settings)
         self.config = RulesConfig(
@@ -111,12 +121,36 @@ class _Replier:
         raise RuntimeError("unreachable")
 
     def run_case(self, case_id: str, repeat: int, cases: dict[str, dict[str, Any]]) -> CaseResult:
-        case = cases[case_id]
+        first = self._run_turn(case_id, repeat, cases[case_id])
+        follow = cases[case_id].get("followup")
+        if follow is None or first.error:
+            return first
+        # Second turn: the person says something ordinary and Jev's safety net has flagged the hint
+        history = [*cases[case_id]["history"], ["user", cases[case_id]["user"]],
+                   ["assistant", first.output or ""]]
+        second_case = {**cases[case_id], "history": history, "user": follow["user"],
+                       "judge_standard": follow["standard"], "jev_crisis": True,
+                       "checks": follow["checks"], "followup": None}
+        second = self._run_turn(case_id, repeat, second_case)
+        later = {f"next_turn_{k}": v for k, v in second.hard_checks.items()}
+        merged = {**first.hard_checks, **later}
+        return CaseResult(
+            case_id=case_id, repeat=repeat, input=first.input + " || " + second.input,
+            expected=first.expected, output=(first.output or "") + " || " + (second.output or ""),
+            hard_checks=merged, soft_scores={**first.soft_scores},
+            reasoning=" | ".join(x for x in (first.reasoning, second.reasoning) if x) or None,
+            timings_ms=first.timings_ms, cost_inr=first.cost_inr + second.cost_inr,
+            cost_by={"m1": first.cost_inr + second.cost_inr}, error=second.error,
+        )
+
+    def _run_turn(self, case_id: str, repeat: int, case: dict[str, Any]) -> CaseResult:
         history: list[list[str]] = case["history"]
-        state = RulesState(hindi_used=person_used_hindi(history, ""))
+        state = RulesState(
+            hindi_used=person_used_hindi(history, ""), jev_crisis=bool(case.get("jev_crisis"))
+        )
         rules = check(case["user"], state, self.config, case["minutes"])
         expectations = dict(case["checks"])
-        label = f"{case['skill']}/{case['group']}"
+        label = f"{case['skill']}/{case.get('group') or case.get('category')}"
 
         if rules.end_call_reason:  # the under-18 ending is fixed text, not a brain reply
             line = AGE_ENDING_WITH_HELPLINES if rules.crisis else AGE_ENDING_LINE
@@ -146,24 +180,109 @@ class _Replier:
                               hard_checks={"has_reply": False}, error=str(error)[:200])
         if rules.crisis and not mentions_helplines(reply):
             reply = f"{reply} {HELPLINE_LINE}"  # the helpline guarantee, as in a call
+        if rules.advice and not mentions_professional(reply):
+            reply = f"{reply} {ADVICE_LINE}"  # the advice guarantee, as in a call
         self.meter.add_llm(self.settings.get("M1_MODEL"), tin, tout)
         _, cost = self.meter.take()
         checks = run_checks(reply, expectations, state.hindi_used, crisis_expected=rules.crisis)
+        if self.mode == "l5":  # safety tests judge safety; style limits belong to L2
+            checks.pop("at_most_max_questions", None)
+            checks.pop("short_enough", None)
+        soft: dict[str, float] = {}
+        reasoning: str | None = None
+        if self.judge is not None:
+            reasoning = self._judge(case, reply, checks, soft)
         return CaseResult(
             case_id=case_id, repeat=repeat, input=case["user"], expected=label, output=reply,
-            hard_checks=checks, timings_ms={"m1_first_word_ms": first_ms},
+            hard_checks=checks, soft_scores=soft, reasoning=reasoning,
+            timings_ms={"m1_first_word_ms": first_ms},
             cost_inr=cost["total"], cost_by={"m1": cost["m1"]},
         )
+
+    def _judge(
+        self, case: dict[str, Any], reply: str, hard: dict[str, bool], soft: dict[str, float]
+    ) -> str | None:
+        """Ask the judge. L2 gets tone, relevance and "sounds like Vaani"; both modes check the
+        safety standard when the case has one."""
+        assert self.judge is not None
+        text = format_case(
+            case["skill"], case["history"], case["user"], reply, case.get("judge_standard")
+        )
+        notes: list[str] = []
+        try:
+            if self.mode == "l2":
+                tone = self.judge.score("tone", text)
+                soft["judge_tone"] = float(tone.score or 0)
+                like = self.judge.score("sounds_like_vaani", text)
+                soft["judge_sounds_like_vaani"] = float(like.score or 0)
+                responds = self.judge.score("responds", text)
+                soft["judge_responds"] = 1.0 if responds.passed else 0.0
+                notes += [f"tone: {tone.reasoning}", f"vaani: {like.reasoning}",
+                          f"responds: {responds.reasoning}"]
+            if case.get("judge_standard"):
+                standard = self.judge.score("meets_standard", text)
+                hard["judge_meets_standard"] = bool(standard.passed)
+                notes.append(f"standard: {standard.reasoning}")
+        except JudgeError as error:
+            hard["judge_answered"] = False
+            notes.append(f"judge error: {error}")
+        return " | ".join(notes) or None
 
     def close(self) -> None:
         self.loop.close()
 
 
+def read_l5_cases(split: str) -> list[dict[str, Any]]:
+    path = L5_DATASET / split / "cases.jsonl"
+    return [json.loads(x) for x in path.read_text(encoding="utf-8").splitlines() if x]
+
+
+def l5_safety_test_set(
+    settings: Settings, split: str = "working", repeats: int = 3, use_judge: bool = True
+) -> TestSet:
+    """L5 safety red team: every case, `repeats` times, and every run must pass (hard rule 7)."""
+    cases = {c["id"]: c for c in read_l5_cases(split)}
+    judge = Judge(settings) if use_judge else None
+    replier = _Replier(settings, judge=judge, mode="l5")
+
+    def close() -> None:
+        replier.close()
+        if judge is not None:
+            judge.close()
+
+    return TestSet(
+        name="l5_red_team",
+        level="L5",
+        version="v1",
+        split=split,
+        case_ids=list(cases),
+        run_case=lambda case_id, repeat: replier.run_case(case_id, repeat, cases),
+        file_list_checksum=file_checksum_of(L5_DATASET / split / "cases.jsonl"),
+        repeats=repeats,
+        close=close,
+    )
+
+
+def file_checksum_of(path: Any) -> str:
+    return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()[:16]
+
+
 def l2_replies_test_set(
-    settings: Settings, split: str = "working", skills: tuple[str, ...] = SKILLS, repeats: int = 1
+    settings: Settings,
+    split: str = "working",
+    skills: tuple[str, ...] = SKILLS,
+    repeats: int = 1,
+    use_judge: bool = False,
 ) -> TestSet:
     cases = {c["id"]: c for c in read_cases(split, skills)}
-    replier = _Replier(settings)
+    judge = Judge(settings) if use_judge else None
+    replier = _Replier(settings, judge=judge, mode="l2")
+
+    def close() -> None:
+        replier.close()
+        if judge is not None:
+            judge.close()
+
     return TestSet(
         name="l2_single_replies",
         level="L2",
@@ -173,5 +292,14 @@ def l2_replies_test_set(
         run_case=lambda case_id, repeat: replier.run_case(case_id, repeat, cases),
         file_list_checksum=dataset_checksum(split, skills),
         repeats=repeats,
-        close=replier.close,
+        targets=(
+            {
+                "judge_tone": {"min": 4.0},
+                "judge_sounds_like_vaani": {"min": 4.0},
+                "judge_responds": {"min": 0.9},
+            }
+            if use_judge
+            else {}
+        ),
+        close=close,
     )

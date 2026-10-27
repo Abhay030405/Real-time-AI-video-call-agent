@@ -15,13 +15,14 @@ from conductor.layers import TurnContext, assemble, fixed_instructions, session_
 from conductor.skills import DEFAULT_SKILL, load_skill, skill_note
 from reliability.filler import FillerTimer
 from rules_check import (
+    ADVICE_LINE,
     AGE_ENDING_LINE,
     AGE_ENDING_WITH_HELPLINES,
     HELPLINE_LINE,
     RulesConfig,
     RulesState,
 )
-from rules_check.patterns import mentions_helplines
+from rules_check.patterns import mentions_helplines, mentions_professional
 from telemetry import TurnRecorder
 
 
@@ -76,6 +77,7 @@ class VaaniAgent(Agent):
         self._flag_sink = flag_sink
         self._end_call = end_call
         self._crisis_reply = False
+        self._advice_reply = False
         self.turn = TurnContext()  # the changing layers, set before each reply
         self.skill = DEFAULT_SKILL  # every call starts in light conversation
         self.intensity = "medium"
@@ -115,6 +117,7 @@ class VaaniAgent(Agent):
         self._user_turns += 1
         self.turn.overrides = result.overrides
         self._crisis_reply = result.crisis
+        self._advice_reply = result.advice
         self._refresh_session_note()
         if self._flag_sink is not None:
             for flag in result.flags:
@@ -156,6 +159,12 @@ class VaaniAgent(Agent):
             self.session.say(HELPLINE_LINE, add_to_chat_ctx=True)
             if self._recorder is not None:
                 self._recorder.note("helpline_line_added")
+        # Same idea for advice: a reply to a medical, legal or money question always names the
+        # right professional, by a fixed line if the AI left it out.
+        if self._advice_reply and reply and not mentions_professional(reply):
+            self.session.say(ADVICE_LINE, add_to_chat_ctx=True)
+            if self._recorder is not None:
+                self._recorder.note("advice_line_added")
 
 
 async def _resolve(result: object) -> AsyncIterable[llm.ChatChunk | str]:

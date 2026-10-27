@@ -33,8 +33,10 @@ WAIT_REPLY_S = 25.0
 
 
 def get_pass(web_url: str) -> dict[str, Any]:
+    # The scripted person has "agreed" to the consent screen, like a tester who ticked the box
+    agreement = json.dumps({"consent": {"version": "consent_v1", "adult": True}}).encode()
     request = urllib.request.Request(
-        f"{web_url}/api/token", data=b"{}", headers={"Content-Type": "application/json"}
+        f"{web_url}/api/token", data=agreement, headers={"Content-Type": "application/json"}
     )
     with urllib.request.urlopen(request, timeout=20) as response:
         data: dict[str, Any] = json.loads(response.read())

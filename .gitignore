@@ -36,3 +36,6 @@ web/out/
 
 # Local recordings (see TEST_MATERIAL_DIR in .env). Never committed.
 storage/
+
+# Founder-only notes, never committed
+docs/untracked/

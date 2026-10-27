@@ -26,16 +26,34 @@ from vendors.speech_to_text import describe_speech_to_text  # noqa: E402
 from vendors.voice import describe_voice  # noqa: E402
 
 from .dummy import dummy_test_set  # noqa: E402
+from .judge_calibration import (  # noqa: E402
+    calibration_status,
+    judge_calibration_test_set,
+    save_latest,
+)
 from .l1_decision_model import l1_decision_model_test_set  # noqa: E402
+from .l1_helper_summaries import l1_helper_summaries_test_set  # noqa: E402
 from .l1_models import l1_models_test_set  # noqa: E402
 from .l1_voice import l1_voice_test_set  # noqa: E402
-from .l2_replies import l2_replies_test_set  # noqa: E402
+from .l2_replies import l2_replies_test_set, l5_safety_test_set  # noqa: E402
 from .runner import RunInfo, TestSet, run_test_set  # noqa: E402
 
-SETS = ("l1_models", "l1_voice", "l2_replies", "l1_decision_model")
+SETS = (
+    "l1_models",
+    "l1_voice",
+    "l2_replies",
+    "l1_decision_model",
+    "l5_safety",
+    "judge_calibration",
+    "l1_helper_summaries",
+)
 
 
-def build_info(settings: Settings, purpose: str) -> RunInfo:
+def build_info(settings: Settings, purpose: str, judge_used: bool = False) -> RunInfo:
+    judge = calibration_status(settings) if judge_used else {}
+    notes = ""
+    if judge_used and not judge["trusted"]:
+        notes = "The AI judge is NOT calibrated for this model and instructions: scores untrusted."
     return RunInfo(
         machine=f"founder laptop ({platform.system()}), local run, not Mumbai",
         triggered_by="founder, by hand",
@@ -49,6 +67,8 @@ def build_info(settings: Settings, purpose: str) -> RunInfo:
             "decision_model": describe_decision_model(settings),
         },
         cost={"exchange_rate": f"{settings.get('USD_INR')} on {settings.get('USD_INR_DATE')}"},
+        judge=judge,
+        notes=notes,
     )
 
 
@@ -59,7 +79,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--split", choices=("working", "hidden"), default="working")
     parser.add_argument("--purpose", default="")
     parser.add_argument("--skill", choices=SKILLS, help="only this skill (l2_replies)")
-    parser.add_argument("--repeats", type=int, default=1, help="runs of every case (l2_replies)")
+    parser.add_argument("--repeats", type=int, default=None, help="runs of every case")
+    parser.add_argument("--judge", action="store_true", help="add the AI judge (l2_replies)")
+    parser.add_argument("--no-judge", action="store_true", help="skip the AI judge (l5_safety)")
     parser.add_argument("--out", type=Path, default=REPO_ROOT / "evals" / "results")
     args = parser.parse_args(argv)
     if not args.dummy and not args.test_set:
@@ -75,13 +97,31 @@ def main(argv: list[str] | None = None) -> int:
         test_set = l1_decision_model_test_set(settings, args.split)
     elif args.test_set == "l2_replies":
         chosen = (args.skill,) if args.skill else SKILLS
-        test_set = l2_replies_test_set(settings, args.split, chosen, args.repeats)
+        test_set = l2_replies_test_set(
+            settings, args.split, chosen, args.repeats or 1, use_judge=args.judge
+        )
+    elif args.test_set == "l1_helper_summaries":
+        test_set = l1_helper_summaries_test_set(settings, args.split)
+    elif args.test_set == "judge_calibration":
+        test_set = judge_calibration_test_set(settings)
+    elif args.test_set == "l5_safety":
+        test_set = l5_safety_test_set(
+            settings, args.split, args.repeats or 3, use_judge=not args.no_judge
+        )
     else:
         test_set = l1_voice_test_set(settings, args.split)
     purpose = args.purpose or f"{test_set.name} {args.split} run"
-    summary, summary_path, cases_path = run_test_set(
-        test_set, build_info(settings, purpose), args.out, REPO_ROOT
+    judged = (
+        (args.test_set == "l2_replies" and args.judge)
+        or (args.test_set == "l5_safety" and not args.no_judge)
+        or args.test_set in ("judge_calibration", "l1_helper_summaries")
     )
+    summary, summary_path, cases_path = run_test_set(
+        test_set, build_info(settings, purpose, judge_used=bool(judged)), args.out, REPO_ROOT
+    )
+    if args.test_set == "judge_calibration" and summary["verdict"] == "pass":
+        save_latest(summary["run_id"], settings)
+        print("Judge calibration passed: saved in evals/judge/calibration/latest.json")
     print(f"{summary['run_id']}: {summary['verdict']}")
     for result in summary["results"]:
         shown = result.get("percentiles") or result.get("value")

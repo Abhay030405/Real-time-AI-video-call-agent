@@ -33,6 +33,44 @@ CRISIS = words(
     "sab khatam kar", "suicide karna", "suicide kar",
 )
 
+# ---- Hints that may mean the person is thinking about ending their life (never joked about) ----
+HINTS = words(
+    "giving away my things", "giving away my stuff", "giving away my belongings",
+    "gave away my things", "goodbye letter", "goodbye letters", "goodbye note",
+    "edge of the balcony", "edge of the roof", "edge of the bridge", "edge of the terrace",
+    "what's the point of any of this", "what is the point of any of this",
+    "what's the point of living", "what is the point of living",
+    "nobody would notice if i was gone", "nobody would even notice if i was gone",
+    "no one would notice if i was gone", "nobody would miss me", "can't do this anymore",
+    "cannot do this anymore", "can not do this anymore", "wish i could disappear",
+    "just disappeared", "just disappear", "i am a burden", "i'm a burden", "a burden to everyone",
+    "won't be around much longer", "stopped caring whether i live", "don't see a future",
+    "do not see a future", "don't see a future for myself",
+    # Hinglish
+    "farak nahi padega agar main nahi", "chhod ke chala jaun", "chhod ke chali jaun",
+    "gaayab ho jaun", "sab khatam ho jaye", "subah na uthun", "main bojh hoon", "bojh hoon",
+)
+
+# ---- A request for medical, legal or money advice (a topic word plus a decision question) ----
+ADVICE_TOPIC = words(
+    "medicine", "medicines", "medication", "tablet", "tablets", "pills", "dose", "dosage",
+    "antibiotic", "antibiotics", "antidepressant", "antidepressants", "insulin", "paracetamol",
+    "prescription", "chest pain", "fever", "symptoms", "stock", "stocks", "crypto", "mutual fund",
+    "invest", "investing", "loan", "emi", "legal notice", "lawsuit", "court", "contract",
+    "sign this", "police case", "case ho gaya", "dawai", "dawa", "goli", "sugar hai", "bimari",
+)
+ADVICE_ASK = words(
+    "should i", "can i", "do i need", "is it okay", "is it safe", "what should", "which",
+    "what's the best", "tell me", "how much", "yes or no", "kya main", "kaunsa", "kaun sa",
+    "kitna", "kya karun", "bolun", "kharidun", "lun", "kam kar", "chup rahun",
+)
+
+
+def asks_for_advice(text: str) -> bool:
+    """A medical, legal or money topic together with a "should I" style question."""
+    return bool(ADVICE_TOPIC.search(text) and ADVICE_ASK.search(text))
+
+
 # ---- Heavy disclosure: something painful was just shared ----
 HEAVY = words(
     "passed away", "passed on", "death of", "funeral", "lost my mother",
@@ -128,6 +166,18 @@ HINDI = words(
 
 # Words that must not count as a "Hindi" signal on their own because they are common English
 HINDI_AMBIGUOUS = {"bas", "kal", "hum", "wala", "toh", "pata", "sach", "mera"}
+
+# ---- Sending the person to a professional ----
+PROFESSIONAL_WORDS = (
+    "doctor", "pharmacist", "physician", "lawyer", "advocate", "solicitor", "financial adviser",
+    "financial advisor", "adviser", "advisor", "professional", "chartered accountant",
+)
+
+
+def mentions_professional(text: str) -> bool:
+    lowered = text.lower()
+    return any(word in lowered for word in PROFESSIONAL_WORDS)
+
 
 # ---- Helplines ----
 HELPLINE_NUMBERS = ("14416", "112")

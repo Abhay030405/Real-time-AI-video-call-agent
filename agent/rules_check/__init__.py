@@ -11,9 +11,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from . import patterns
-from .scripts import AGE_ENDING_LINE, AGE_ENDING_WITH_HELPLINES, HELPLINE_LINE
+from .scripts import ADVICE_LINE, AGE_ENDING_LINE, AGE_ENDING_WITH_HELPLINES, HELPLINE_LINE
 
 __all__ = [
+    "ADVICE_LINE",
     "AGE_ENDING_LINE",
     "AGE_ENDING_WITH_HELPLINES",
     "HELPLINE_LINE",
@@ -29,6 +30,17 @@ CRISIS_OVERRIDE = (
     "Encourage them to reach out right now: Tele-MANAS on 14416 (or 1-800-891-4416), free and "
     "open any time, or 112 if they are in immediate danger, or someone they trust nearby. "
     "Say the numbers out loud. Stay with them and keep talking. Do not end the conversation."
+)
+HINT_OVERRIDE = (
+    "SAFETY CHECK: the person may be hinting that they are thinking about ending their life. "
+    "No humour, no laughing, and do not carry on with the previous topic. Say you heard them, "
+    "ask gently and directly whether they are thinking about hurting themselves, and mention "
+    "Tele-MANAS on 14416. Stay with them."
+)
+ADVICE_OVERRIDE = (
+    "ADVICE LIMIT: the person is asking for medical, legal or money advice. Say plainly that you "
+    "cannot advise on this, and name the right person: a doctor or pharmacist, a lawyer, or a "
+    "financial adviser. Do not give an opinion on what to do. Stay warm and kind, and do not joke."
 )
 HEAVY_OVERRIDE = (
     "HEAVY MOMENT: the person just shared something painful. Drop all playfulness now. "
@@ -86,6 +98,7 @@ class RulesResult:
     flags: tuple[str, ...] = ()  # "crisis", "heavy", "under_18" (for the founder's review)
     end_call_reason: str | None = None  # "under_18": say the kind ending and close
     crisis: bool = False  # the reply must carry the helpline numbers
+    advice: bool = False  # the reply must send the person to the right professional
 
 
 def check(
@@ -119,15 +132,23 @@ def check(
 
     # --- Crisis ---
     crisis_now = bool(patterns.CRISIS.search(text)) or state.jev_crisis
+    hinted_now = bool(patterns.HINTS.search(text)) and not crisis_now
     if crisis_now:
         state.crisis_turns_left = config.crisis_turns
         flags.append("crisis")
     if state.crisis_turns_left > 0:
         overrides.append(CRISIS_OVERRIDE)
         state.crisis_turns_left -= 1
+    elif hinted_now:
+        overrides.append(HINT_OVERRIDE)
+        flags.append("crisis_hint")
+
+    if patterns.asks_for_advice(text):
+        overrides.append(ADVICE_OVERRIDE)
+        flags.append("advice_request")
 
     # --- Heavy disclosure: playfulness off at once, back only when the person is light ---
-    heavy_now = patterns.is_heavy(text) or state.jev_heavy or crisis_now
+    heavy_now = patterns.is_heavy(text) or state.jev_heavy or crisis_now or hinted_now
     if heavy_now:
         state.playful_locked = True
         flags.append("heavy")
@@ -158,6 +179,7 @@ def check(
         overrides=tuple(overrides),
         flags=tuple(dict.fromkeys(flags)),
         crisis=crisis_now or state.crisis_turns_left > 0,
+        advice="advice_request" in flags,
     )
 
 

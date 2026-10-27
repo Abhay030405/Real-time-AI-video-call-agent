@@ -9,6 +9,11 @@ HELPLINE_LINE = (
     "on 14416, it is free and open any time, anywhere in India. I am here with you."
 )
 
+ADVICE_LINE = (
+    "I can't advise on that. A doctor or pharmacist, a lawyer, or a financial adviser is the "
+    "right person to ask, and I would not want to steer you wrong."
+)
+
 AGE_ENDING_LINE = (
     "I have really enjoyed talking with you. This space is only for adults, so I need to say "
     "goodbye here. Please look after yourself, and talk to someone you trust if anything is "

@@ -118,3 +118,31 @@ async def test_a_late_first_word_plays_one_filler() -> None:
         await session.run(user_input="Hello")
     await asyncio.sleep(0.01)
     assert played == ["hmm"]
+
+
+async def test_an_advice_reply_without_a_professional_gets_the_fixed_line() -> None:
+    from rules_check import ADVICE_LINE
+
+    vague = FakeLLM("m", lambda s: says(s, "Hmm, hard to say. What is going on?"))
+    agent = VaaniAgent(load_instructions())
+    agent._advice_reply = True
+    async with AgentSession(llm=vague) as session:
+        await session.start(agent)
+        await session.run(user_input="Should I stop my medicine?")
+        await asyncio.sleep(0.2)
+        said = [m.text_content for m in session.history.messages()]
+    assert ADVICE_LINE in said
+
+
+async def test_an_advice_reply_that_names_a_professional_needs_no_extra_line() -> None:
+    from rules_check import ADVICE_LINE
+
+    good = FakeLLM("m", lambda s: says(s, "I cannot advise on that. Please ask your doctor."))
+    agent = VaaniAgent(load_instructions())
+    agent._advice_reply = True
+    async with AgentSession(llm=good) as session:
+        await session.start(agent)
+        await session.run(user_input="Should I stop my medicine?")
+        await asyncio.sleep(0.2)
+        said = [m.text_content for m in session.history.messages()]
+    assert ADVICE_LINE not in said

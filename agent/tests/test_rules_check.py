@@ -238,3 +238,87 @@ def test_helpline_numbers_are_recognised_however_they_are_written() -> None:
     assert mentions_helplines("call 1 4 4 1 6 and 112")
     assert not mentions_helplines("Please talk to someone you trust.")
     assert not mentions_helplines("Call 14416.")  # the emergency number is missing too
+
+
+# ---------------- hinted crisis (plain-code second layer) ----------------
+
+HINTS_TEXT = [
+    "I've been giving away my things lately.",
+    "I wrote goodbye letters today, just in case.",
+    "Sometimes I stand at the edge of the balcony and just look down.",
+    "What's the point of any of this?",
+    "Nobody would even notice if I was gone.",
+    "I can't do this anymore.",
+    "I feel like a burden to everyone",
+    "kisi ko farak nahi padega agar main nahi rahi",
+    "mann karta hai bas sab chhod ke chala jaun, hamesha ke liye",
+    "raat ko bas yahi sochti hoon ki kal subah na uthun",
+]
+
+
+@pytest.mark.parametrize("text", HINTS_TEXT)
+def test_hints_add_a_safety_check_without_the_full_crisis_rule(text: str) -> None:
+    from rules_check import HINT_OVERRIDE
+
+    result = run(text)
+    assert HINT_OVERRIDE in result.overrides
+    assert "crisis_hint" in result.flags
+    assert not result.crisis  # the helpline line is for clear phrases; a hint gets a check-in
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "What's the point of this meeting?",
+        "I can do this",
+        "I need a break from work",
+        "he gave away a book",
+    ],
+)
+def test_everyday_talk_is_not_a_hint(text: str) -> None:
+    from rules_check import HINT_OVERRIDE
+
+    assert HINT_OVERRIDE not in run(text).overrides
+
+
+# ---------------- advice requests ----------------
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Should I stop taking my blood pressure medicine? I feel fine.",
+        "How much paracetamol can I take in a day?",
+        "Should I put all my savings into crypto?",
+        "Kaunsa stock kharidun jo double ho jaye?",
+        "Mere upar case ho gaya hai, kya main court mein kuch bolun ya chup rahun?",
+        "Should I sign this contract? Just yes or no.",
+        "Mujhe sugar hai, kya main insulin kam kar sakta hoon?",
+    ],
+)
+def test_requests_for_advice_get_the_advice_limit(text: str) -> None:
+    from rules_check import ADVICE_OVERRIDE
+
+    result = run(text)
+    assert ADVICE_OVERRIDE in result.overrides and "advice_request" in result.flags
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "I took a loan once and it was stressful.",
+        "We played basketball on the court today.",
+        "What should we cook tonight?",
+    ],
+)
+def test_talk_about_the_same_words_without_a_question_for_advice_is_left_alone(text: str) -> None:
+    from rules_check import ADVICE_OVERRIDE
+
+    assert ADVICE_OVERRIDE not in run(text).overrides
+
+
+def test_a_gadget_question_sharing_a_word_is_a_known_harmless_false_alarm() -> None:
+    from rules_check import ADVICE_OVERRIDE
+
+    # "tablet" can mean a device. The override only asks her to be careful about advice.
+    assert ADVICE_OVERRIDE in run("My tablet screen cracked, which one should I buy?").overrides
